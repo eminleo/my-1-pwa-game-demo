@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo v1</title>
+    <title>Demo v5.11</title>
 
-    <!-- [PWA 修復] 這裡就是讓圖示出現的關鍵！ -->
+    <!-- [PWA 設定] -->
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon.png">
     <meta name="theme-color" content="#3e2723">
@@ -43,7 +43,7 @@
             Swords: "M14.5 17.5 L3 6 V3 H6 L17.5 14.5 Z M13 19 L19 13 M16 16 L20 20 M19 21 L21 19 M6.5 14.5 L18 3 H21 V6 L9.5 17.5 Z M5 13 L11 19 M8 16 L4 20 M3 19 L5 21",
             SwordFull: "M14.5 17.5 L3 6 V3 H6 L17.5 14.5 M13 19 L19 13 M16 16 L20 20 M19 21 L21 19", 
             Move: "M5 9l-3 3 3 3 M9 5l3-3 3 3 M19 9l3 3-3 3 M15 19l-3 3-3-3 M2 12h20 M12 2v20",
-            Lock: "M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zm-6-4a3 3 0 0 1 6 0v4h-6z",
+            Lock: "M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z M7 11V7a5 5 0 0 1 10 0v4 M12 16v3",
             Eye: "M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
             RotateCcw: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5",
             Heart: "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z",
@@ -565,7 +565,7 @@
         
         const [wardPos, setWardPos] = useState([0, 1]);
         const [unlockedCount, setUnlockedCount] = useState(0);
-        const [doomCounter, setDoomCounter] = useState(WARD_PATH.length); 
+        const [doomCounter, setDoomCounter] = useState(9); 
         const [gameTurn, setGameTurn] = useState(1); 
         const [gamePhase, setGamePhase] = useState('setup'); 
         const [actionArray, setActionArray] = useState(Array(12).fill(null)); 
@@ -764,6 +764,8 @@
             let curWard = [...wardPos];
             let currentExecMap = { boss: null, red: null, yellow: null, green: null };
             let queue = [...finalArray];
+            
+            let currentDoomCount = doomCounter;
 
             for (let i = 0; i < queue.length; i++) {
             setResolvingIndex(i);
@@ -804,8 +806,13 @@
                     const valid = []; const [br, bc] = p.pos;
                     if (effectiveType === 'move_ud') { if (br > 0) valid.push([br-1, bc]); if (br < 2) valid.push([br+1, bc]); }
                     else { if (bc > 0) valid.push([br, bc-1]); if (bc < 2) valid.push([br, bc+1]); }
-                    targetPos = await new Promise(r => { setSelectableCells(valid); interactionResolverRef.current = r; });
-                    setSelectableCells([]);
+                    
+                    if (valid.length === 1) {
+                        targetPos = valid[0];
+                    } else if (valid.length > 1) {
+                        targetPos = await new Promise(r => { setSelectableCells(valid); interactionResolverRef.current = r; });
+                        setSelectableCells([]);
+                    }
                 } else if (effectiveType === 'choice_2') {
                     const [r, c] = p.pos;
                     const valid = [[r, c]]; 
@@ -832,7 +839,12 @@
                 targetPos = AI_BRAIN.getBestMoveTarget(p.pos, effectiveType, curBoard, curPlayers.boss.pos, allies);
             }
 
-            await triggerCinematic(i, p.id, effectiveType, targetPos);
+            let visualType = effectiveType;
+            if (effectiveType.includes('unlock') && (!currentCell.dice || currentCell.dice <= 0)) {
+                visualType = 'void';
+            }
+
+            await triggerCinematic(i, p.id, visualType, targetPos);
 
             const startPosStr = `(${p.pos[0]},${p.pos[1]})`;
             const endPosStr = `(${targetPos[0]},${targetPos[1]})`;
@@ -845,13 +857,13 @@
                         curBoard[p.pos[0]][p.pos[1]].dice--;
                         const newDice = curBoard[p.pos[0]][p.pos[1]].dice;
                         setFlashCell({ pos: p.pos, type: 'unlock' });
-                        logDetail = `Attempt Unlock (Dice: ${oldDice} -> ${newDice})`;
+                        logDetail = `Unlock Attempt (Dice: ${oldDice} -> ${newDice})`;
                         
                         if (curBoard[p.pos[0]][p.pos[1]].dice === 0) {
                         curUnlocked++;
                         logDetail = `🔓 Unlocked!`;
                         if (curBoard[p.pos[0]][p.pos[1]].hourglass) {
-                            addLog("⏳ Time Reverse! Doom +1");
+                            addLog("⏳ Time Reversed! (Round +1)");
                             curBoard.forEach(row => row.forEach(cell => { if (cell.type === FIELD_TYPES.EYE) cell.type = FIELD_TYPES.BLANK; }));
                             curBoard[p.pos[0]][p.pos[1]].type = FIELD_TYPES.BLANK;
                             curBoard[p.pos[0]][p.pos[1]].hourglass = false;
@@ -859,37 +871,38 @@
                             const prevIdx = (currentWardIdx - 1 + WARD_PATH.length) % WARD_PATH.length;
                             curWard = WARD_PATH[prevIdx];
                             setWardPos(curWard);
+                            currentDoomCount++; 
                             setDoomCounter(prev => prev + 1); 
                         } else {
                             curBoard[p.pos[0]][p.pos[1]].type = FIELD_TYPES.EYE;
                         }
                         }
                     } else {
-                        logDetail = "Unlock Failed (Open)";
+                        logDetail = "Action Voided (Already Open)";
                         setFlashCell({ pos: p.pos, type: 'attack_gray' });
                     }
                 } else if (effectiveType.includes('heal')) {
                     const isWardHere = p.pos[0] === curWard[0] && p.pos[1] === curWard[1];
                     const isEyeHere = curBoard[p.pos[0]][p.pos[1]].type === FIELD_TYPES.EYE;
                     if (isWardHere && isEyeHere) {
-                    logDetail = "🌑 Eclipse! Heal Failed"; 
+                    logDetail = "Heal Failed (Eclipse)"; 
                     setFlashCell({ pos: p.pos, type: 'attack_gray' });
                     } else if (p.hp < 2) {
                     p.hp++;
                     setFlashCell({ pos: p.pos, type: 'heal_success' });
-                    logDetail = `❤️ Heal (HP ${p.hp})`;
+                    logDetail = `❤️ Healed (HP ${p.hp})`;
                     } else {
-                    logDetail = "HP Full, Failed";
+                    logDetail = "Heal Failed (Full HP)";
                     }
                 } else if (effectiveType === 'shield') { 
                     const isWardHere = p.pos[0] === curWard[0] && p.pos[1] === curWard[1];
                     const isEyeHere = curBoard[p.pos[0]][p.pos[1]].type === FIELD_TYPES.EYE;
                     if (isWardHere && isEyeHere) {
-                    logDetail = "🌑 Eclipse! Shield Failed";
+                    logDetail = "Shield Failed (Eclipse)";
                     setFlashCell({ pos: p.pos, type: 'attack_gray' });
                     } else {
                     p.isShielded = true; setFlashCell({ pos: p.pos, type: 'shield' }); 
-                    logDetail = "🛡️ Shield Up";
+                    logDetail = "🛡️ Shield Activated";
                     }
                 } else if (effectiveType === 'attack') {
                     let hits = 0;
@@ -915,7 +928,7 @@
                     setFlashCell({ pos: p.pos, type: hits > 0 ? 'damage' : 'attack_gray' });
                     
                     if(hitDetails.length > 0) logDetail = `${hitDetails.join(", ")}`;
-                    else logDetail = "Miss";
+                    else logDetail = "Attack Missed";
 
                 } else if (effectiveType === 'assault') {
                     let hits = 0;
@@ -923,7 +936,7 @@
                     const targets = Object.values(curPlayers).filter(t => t.id !== 'boss' && t.pos[0] === p.pos[0] && t.pos[1] === p.pos[1]);
                     
                     if (targets.length === 0) {
-                        logDetail = "Miss";
+                        logDetail = "Attack Missed";
                         setFlashCell({ pos: p.pos, type: 'attack_gray' });
                     } else if (targets.length === 1 && !targets[0].isDead) {
                         const t = targets[0];
@@ -964,7 +977,7 @@
                                 target.hp--; hits++;
                                 assaultDetails.push(`Hit ${getPlayerIcon(target.id)} (HP ${oldHp}->${target.hp})`);
                                 if (target.hp <= 0) {
-                                    target.isDead = true; target.pos = [-1, -1];
+                                    target.isDead = true; target.pos = [-1, -1]; 
                                     for (let k = i + 1; k < queue.length; k++) if (queue[k]?.playerId === target.id) { curPlayers[target.id].discard.push(queue[k].card); queue[k] = null; }
                                     setActionArray([...queue]);
                                 }
@@ -982,7 +995,7 @@
                 
                 currentExecMap[p.id] = effectiveType;
             } else {
-                logDetail = "Action Void";
+                logDetail = "Action Voided";
             }
 
             addLog(`${logPrefix} ${playerIcon} : ${logDetail}`);
@@ -1007,18 +1020,23 @@
             const wardIdx = WARD_PATH.findIndex(([pr, pc]) => pr === curWard[0] && pc === curWard[1]);
             const nextIdx = (wardIdx + 1) % WARD_PATH.length;
             setWardPos(WARD_PATH[nextIdx]);
-            if (curUnlocked >= 3) setWinner('Survivors');
-            else if (curWard[0] === 0 && curWard[1] === 1 && gameTurn > 1) setWinner('Boss');
-            else { 
-            setDoomCounter(r => r - 1); 
-            setGameTurn(t => t + 1); 
-            startNewRound(curPlayers, WARD_PATH[nextIdx], curBoard); 
+            
+            if (curUnlocked >= 3) {
+                setWinner('Survivors');
+            } 
+            else if (currentDoomCount - 1 <= 0) { 
+                setWinner('Boss');
+                setDoomCounter(0); 
+            } else { 
+                setDoomCounter(r => r - 1); 
+                setGameTurn(t => t + 1); 
+                startNewRound(curPlayers, WARD_PATH[nextIdx], curBoard); 
             }
         };
 
         useEffect(() => {
             const fields = shuffle([...Array(3).fill(FIELD_TYPES.BLANK), FIELD_TYPES.EYE, ...Array(5).fill(FIELD_TYPES.LOCK)]);
-            const dicePool = shuffle([5, 6, 6, 7, 7]);
+            const dicePool = shuffle([6, 6, 6, 7, 7]);
             let dicePoolIndex = 0;
 
             const newBoard = [];
@@ -1030,8 +1048,18 @@
                 newBoard[i][j] = { type, dice, id: `cell-${i}-${j}`, hourglass: false };
             }
             }
-            let hPlaced = false;
-            for(let i=0; i<3; i++) for(let j=0; j<3; j++) if(newBoard[i][j].type === FIELD_TYPES.LOCK && !hPlaced) { newBoard[i][j].hourglass = true; hPlaced = true; }
+            
+            const lockCoords = [];
+            newBoard.forEach((row, r) => row.forEach((cell, c) => {
+                if (cell.type === FIELD_TYPES.LOCK) lockCoords.push([r, c]);
+            }));
+
+            if (lockCoords.length > 0) {
+                const randIndex = Math.floor(Math.random() * lockCoords.length);
+                const [hr, hc] = lockCoords[randIndex];
+                newBoard[hr][hc].hourglass = true;
+            }
+
             setBoard(newBoard);
             const nextPlayers = { ...players };
             ['red', 'yellow', 'green', 'boss'].forEach(id => {
@@ -1132,13 +1160,13 @@
                                         flashCell.type === 'attack_gray' ? `bg-gray-500/60` :
                                     `bg-[${THEME_COLORS.YELLOW}]/40`
                                     ) : ''}`}>
-                            <div className="absolute top-1 right-1 flex items-center gap-1 z-20">
+                            <div className="absolute top-0 right-0 p-0.5 flex items-center gap-1 z-[60]">
                                 {cell.hourglass && <div className="animate-hourglass-glow"><Hourglass size={12} className={`text-[${THEME_COLORS.BLUE}]`} /></div>}
                                 {cell.type === 'lock' && cell.dice > 0 && <div className="w-5 h-5 bg-[#d7ccc8] text-[#3e2723] rounded flex items-center justify-center font-black text-[10px] border border-[#8d6e63]">{cell.dice}</div>}
                                 {cell.type === 'eye' && <div className={`bg-[${THEME_COLORS.BLUE}]/40 p-0.5 rounded`}><Eye size={14} className={`text-[${THEME_COLORS.BLUE}]`} /></div>}
                             </div>
                             <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none p-4">
-                                {cell.type === 'lock' && <Lock size={48} className="text-[#8d6e63]" />}
+                                {cell.type === 'lock' && <Key size={48} className="text-[#8d6e63]" />}
                                 {cell.type === 'eye' && (
                                 (wardPos[0] === r && wardPos[1] === c) ? 
                                 <Moon size={48} className="text-white drop-shadow-md" /> : 
