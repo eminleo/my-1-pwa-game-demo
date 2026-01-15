@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Demo v1</title>
+
+    <!-- [PWA 修復] 這裡就是讓圖示出現的關鍵！ -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <meta name="theme-color" content="#3e2723">
     
     <!-- 1. 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -35,16 +40,13 @@
         // --- 內嵌圖標系統 ---
         const ICON_PATHS = {
             Shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-            // [修正] 重繪 Swords 為標準的雙劍交叉圖案，修復視覺錯誤
             Swords: "M14.5 17.5 L3 6 V3 H6 L17.5 14.5 Z M13 19 L19 13 M16 16 L20 20 M19 21 L21 19 M6.5 14.5 L18 3 H21 V6 L9.5 17.5 Z M5 13 L11 19 M8 16 L4 20 M3 19 L5 21",
-            // [修正] 重命名為 SwordFull 以強制更新，並使用更精簡的完整路徑
             SwordFull: "M14.5 17.5 L3 6 V3 H6 L17.5 14.5 M13 19 L19 13 M16 16 L20 20 M19 21 L21 19", 
             Move: "M5 9l-3 3 3 3 M9 5l3-3 3 3 M19 9l3 3-3 3 M15 19l-3 3-3-3 M2 12h20 M12 2v20",
             Lock: "M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zm-6-4a3 3 0 0 1 6 0v4h-6z",
             Eye: "M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
             RotateCcw: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5",
             Heart: "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z",
-            // [修正] 下移頭部位置 (M12 7 -> M12 13)，縮小與身體的間距，使其看起來更像一個整體
             User: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2 M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
             HelpCircle: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3 M12 17h.01",
             Archive: "M21 8v13H3V8 M1 3h22v5H1z M10 12h4",
@@ -89,10 +91,8 @@
             );
         };
 
-        // 創建所有需要的 Icon 組件
         const Shield = (props) => <IconBase name="Shield" {...props} />;
         const Swords = (props) => <IconBase name="Swords" {...props} />;
-        // 使用新的 SwordFull 定義
         const Sword = (props) => <IconBase name="SwordFull" {...props} />;
         const Move = (props) => <IconBase name="Move" {...props} />;
         const Lock = (props) => <IconBase name="Lock" {...props} />;
@@ -118,12 +118,10 @@
         const Moon = (props) => <IconBase name="Moon" {...props} />;
         const RefreshCw = (props) => <IconBase name="RefreshCw" {...props} />;
 
-        // --- Constants ---
         const WARD_PATH = [[0, 1], [0, 2], [1, 2], [2, 2], [2, 1], [2, 0], [1, 0], [0, 0]];
         const FIELD_TYPES = { BLANK: 'blank', EYE: 'eye', LOCK: 'lock' };
         const FLASH_DURATION = 600; 
 
-        // Theme Colors
         const THEME_COLORS = {
         RED: '#D72600',
         BLUE: '#0956BF',
@@ -134,13 +132,12 @@
         };
 
         const COLORS = {
-        purple: THEME_COLORS.PURPLE, // Boss
-        red: THEME_COLORS.RED,        // AI Red
-        yellow: THEME_COLORS.YELLOW, // AI Yellow
-        green: THEME_COLORS.GREEN    // AI Green
+        purple: THEME_COLORS.PURPLE, 
+        red: THEME_COLORS.RED,        
+        yellow: THEME_COLORS.YELLOW, 
+        green: THEME_COLORS.GREEN    
         };
 
-        // Initial Decks
         const INITIAL_BOSS_DECK = [
         { id: 'b1', name: 'Move U/D', type: 'move_ud', needChoice: true },
         { id: 'b2', name: 'Move U/D', type: 'move_ud', needChoice: true },
@@ -173,7 +170,6 @@
         return newArr;
         };
 
-        // --- Helper Functions ---
         const getNumberEmoji = (num) => {
         const map = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
         return map[num] || '#️⃣';
@@ -197,49 +193,31 @@
         return "STAY";
         };
 
-        // --- AI BRAIN MODULE (New Logic) ---
         const AI_BRAIN = {
-        // Requirement 5 & 7: Threat Lookup Table (Boss Danger Zone)
         getThreatScore: (aiPos, bossPos, hasShield, isEclipse) => {
             const dist = Math.abs(aiPos[0] - bossPos[0]) + Math.abs(aiPos[1] - bossPos[1]);
-            
-            // Requirement 8: Boss Corner Weakness
-            // If Boss is in a corner, they have fewer moves, making diagonals slightly safer.
             const isBossCorner = (bossPos[0]===0||bossPos[0]===2) && (bossPos[1]===0||bossPos[1]===2);
-            
             let score = 0;
-            
-            // Dist 0: Fatal (1 AP to kill)
             if (dist === 0) {
-            // Shield is useless at range 0 usually, but let's say it helps slightly if boss misses (rare)
-            // But generally, STAYING on Boss is suicide.
             score = -2000; 
             }
-            // Dist 1: High Risk (Move + Attack = 2 AP)
             else if (dist === 1) {
-            if (hasShield && !isEclipse) score = -50; // Survivable with shield
-            else score = -500; // Very dangerous
+            if (hasShield && !isEclipse) score = -50; 
+            else score = -500; 
             }
-            // Dist 2: Medium Risk (Move + Move + Attack = 3 AP)
             else if (dist === 2) {
-            // If boss is cornered, Dist 2 is harder for Boss to navigate effectively to a specific spot
             const risk = isBossCorner ? -10 : -30;
             score = risk;
             }
-            // Dist 3+: Safe
             else {
-            score = 20; // Safe zone bonus
+            score = 20; 
             }
-
             return score;
         },
 
-        // Requirement 2: Permutations Generator
         getHandPermutations: (hand) => {
-            // We need to pick 3 cards out of hand.length (usually 5)
-            // And arrange them in order [Slot1, Slot2, Slot3]
             const results = [];
-            if (hand.length < 3) return [hand]; // Should not happen in full game
+            if (hand.length < 3) return [hand]; 
 
             const permute = (arr, m = []) => {
             if (m.length === 3) {
@@ -253,16 +231,13 @@
             }
             };
             permute(hand);
-            // Limit to a reasonable number if hand is huge, but P(5,3) = 60 is fine.
             return results;
         },
 
-        // Deterministic Move Logic (Shared between Planner & Resolver)
         getBestMoveTarget: (currentPos, cardType, board, bossPos, allyPositions) => {
             const [r, c] = currentPos;
             const candidates = [];
             
-            // 1. Identify valid moves based on card type
             if (cardType.includes('ud')) {
             if (r > 0) candidates.push([r - 1, c]);
             if (r < 2) candidates.push([r + 1, c]);
@@ -270,7 +245,6 @@
             if (c > 0) candidates.push([r, c - 1]);
             if (c < 2) candidates.push([r, c + 1]);
             } else {
-            // Fallback for Move 4/8 or generic
             const neighbors = [[-1,0], [1,0], [0,-1], [0,1]];
             neighbors.forEach(([dr, dc]) => {
                 const nr = r+dr, nc = c+dc;
@@ -280,7 +254,6 @@
 
             if (candidates.length === 0) return currentPos;
 
-            // 2. Score candidates to find the deterministic "Best"
             let bestTarget = candidates[0];
             let maxScore = -Infinity;
 
@@ -288,28 +261,24 @@
             const [tr, tc] = pos;
             let score = 0;
 
-            // Factor A: Distance to Boss (Safety)
             const distToBoss = Math.abs(tr - bossPos[0]) + Math.abs(tc - bossPos[1]);
-            // Prefer Dist 3+, Avoid 0 and 1
             if (distToBoss === 0) score -= 1000;
             else if (distToBoss === 1) score -= 200;
             else if (distToBoss === 2) score -= 20;
             else score += 50;
 
-            // Factor B: Distance to Allies (Dispersion - Requirement 1)
             let crowdPenalty = 0;
             allyPositions.forEach(ap => {
                 const dist = Math.abs(tr - ap[0]) + Math.abs(tc - ap[1]);
-                if (dist === 0) crowdPenalty -= 100; // Don't stack
-                if (dist === 1) crowdPenalty -= 10;  // Don't bunch
+                if (dist === 0) crowdPenalty -= 100; 
+                if (dist === 1) crowdPenalty -= 10; 
             });
             score += crowdPenalty;
 
-            // Factor C: Lock Interaction (Requirement 6)
             const cell = board[tr][tc];
             if (cell.type === FIELD_TYPES.LOCK && cell.dice > 0) {
-                score += 80; // High priority to land on locks
-                if (cell.dice === 1) score += 20; // Bonus if near breaking
+                score += 80; 
+                if (cell.dice === 1) score += 20; 
             }
 
             if (score > maxScore) {
@@ -321,93 +290,78 @@
             return bestTarget;
         },
 
-        // Simulate a single permutation (3 cards sequence) for ONE player
         simulateSequence: (player, sequence, board, players, bossPos, wardPos) => {
-            // Clone state lightly for simulation
             let pState = { ...player, pos: [...player.pos] };
             let score = 0;
             
-            // Simulate 3 moves
             for (let i = 0; i < sequence.length; i++) {
             const card = sequence[i];
             let type = card.type;
             
-            // Handle Repeat (Simple prediction: assume repeat previous successful move or void)
             if (type === 'repeat') type = i > 0 ? sequence[i-1].type : 'void';
-            if (type === 'repeat') type = 'void'; // Prevent infinite recursion logic for now
+            if (type === 'repeat') type = 'void'; 
 
             const cell = board[pState.pos[0]][pState.pos[1]];
             const isLock = cell.type === FIELD_TYPES.LOCK && cell.dice > 0;
             const isWard = pState.pos[0] === wardPos[0] && pState.pos[1] === wardPos[1];
             const isEye = cell.type === FIELD_TYPES.EYE;
-            const isEclipse = isWard && isEye; // Requirement 4
+            const isEclipse = isWard && isEye; 
 
-            // Requirement 9: Complex Card Logic
-            // Resolve "Or" cards based on context
             if (type === 'unlock_heal') {
                 if (isLock) type = 'unlock';
                 else if (pState.hp < 2 && !isEclipse) type = 'heal';
-                else type = 'void'; // Waste
+                else type = 'void'; 
             } else if (type === 'unlock_move_ud') {
-                if (isLock) type = 'unlock'; // Always prefer unlock if on lock
+                if (isLock) type = 'unlock'; 
                 else type = 'move_ud';
             } else if (type === 'unlock_move_lr') {
                 if (isLock) type = 'unlock';
                 else type = 'move_lr';
             }
 
-            // Scoring & Action
             if (type.includes('unlock')) {
                 if (isLock) {
-                score += 150; // Big points for attempting unlock
-                if (cell.dice === 1) score += 50; // Breaking a lock
+                score += 150; 
+                if (cell.dice === 1) score += 50; 
                 } else {
-                score -= 10; // Wasted action
+                score -= 10; 
                 }
             } else if (type.includes('heal')) {
                 if (isEclipse) {
-                score -= 50; // Wasted on eclipse
+                score -= 50; 
                 } else if (pState.hp < 2) {
-                score += 60; // Good heal
-                pState.hp = 2; // Sim recovery
+                score += 60; 
+                pState.hp = 2; 
                 } else {
-                score -= 5; // Wasted but safely (stall)
+                score -= 5; 
                 }
             } else if (type === 'shield') {
                 if (isEclipse) {
                 score -= 50;
                 } else {
                 pState.isShielded = true;
-                // Contextual value of shield
                 const dist = Math.abs(pState.pos[0] - bossPos[0]) + Math.abs(pState.pos[1] - bossPos[1]);
-                if (dist <= 1) score += 100; // Clutch shield
-                else score -= 10; // Wasted shield
+                if (dist <= 1) score += 100; 
+                else score -= 10; 
                 }
             } else if (type.includes('move')) {
                 const allies = Object.values(players).filter(pl => pl.id !== 'boss' && pl.id !== player.id).map(pl => pl.pos);
-                // Use the DETERMINISTIC helper
                 const newPos = AI_BRAIN.getBestMoveTarget(pState.pos, type, board, bossPos, allies);
                 
-                // Score the movement
                 if (newPos[0] === pState.pos[0] && newPos[1] === pState.pos[1]) {
-                score -= 20; // Failed to move / stuck
+                score -= 20; 
                 } else {
                 pState.pos = newPos;
-                score += 10; // Basic move value
+                score += 10; 
                 }
             }
 
-            // End of Step Evaluation
-            // Threat Check
             const threat = AI_BRAIN.getThreatScore(pState.pos, bossPos, pState.isShielded, isEclipse);
             score += threat;
             
-            // Objective Check (Requirement 6)
-            // Bonus for ending turn on a lock (setup for next turn)
             const endCell = board[pState.pos[0]][pState.pos[1]];
             if (endCell.type === FIELD_TYPES.LOCK && endCell.dice > 0) {
                 score += 40;
-                // Requirement 6: If far from boss and on lock, huge priority
                 const dist = Math.abs(pState.pos[0] - bossPos[0]) + Math.abs(pState.pos[1] - bossPos[1]);
                 if (dist >= 3) score += 100; 
             }
@@ -417,7 +371,6 @@
         }
         };
 
-        // --- Main Component ---
         const ActionIcons = ({ type, size = 12, dark = false, isFlying = false }) => {
         const icons = [];
         const isCardMode = dark && !isFlying;
@@ -518,10 +471,8 @@
                         {p.isShielded ? (
                             <Shield size={18} />
                         ) : p.id === 'boss' ? (
-                            // [修改] 將 Skull 改為 Eye，reuse 現有的 svg icon
                             <Eye size={18} />
                         ) : (
-                            // [修正] 進一步縮小頭像尺寸至 18px
                             <User size={18} />
                         )}
                     </div>
@@ -552,7 +503,6 @@
             >
             <div className="flex flex-col gap-0.5 justify-center">
                 {player.id === 'boss' ? (
-                // [修改] 將 Skull 改為 Eye，並保持紫色主題
                 <Eye size={10} style={{ color: THEME_COLORS.PURPLE }} />
                 ) : (
                 [...Array(2)].map((_, i) => (
@@ -634,29 +584,23 @@
         
         const addLog = (msg) => setLogs(prev => [String(msg), ...prev].slice(0, 50));
 
-        // --- REWRITTEN AI PLANNER & ROUND START ---
         const findBestSpawnPos = (currentBoard, currentPlayers, currentWard, currentPlayerId) => {
-            // Reuse the AI_BRAIN threat logic for spawn points
             const candidates = [];
             currentBoard.forEach((row, r) => row.forEach((cell, c) => {
             const isBossPos = r === currentPlayers.boss.pos[0] && c === currentPlayers.boss.pos[1];
             const isWard = r === currentWard[0] && c === currentWard[1];
             const occupied = Object.values(currentPlayers).some(p => p.pos[0] === r && p.pos[1] === c && !p.isDead && !p.isRecovering && p.id !== currentPlayerId);
             
-            // Basic rules: No Boss, No Other Players, No Dice(Lock)
             if ((!cell.dice || cell.dice === 0) && !isBossPos && !occupied) {
                 let score = 0;
-                // Avoid Ward
                 if (isWard) score -= 100;
                 
-                // Use Threat Logic (Safe Distance)
                 score += AI_BRAIN.getThreatScore([r,c], currentPlayers.boss.pos, false, false);
 
-                // Dispersion
                 Object.values(currentPlayers).forEach(p => {
                 if (p.type === 'ai' && !p.isDead && p.id !== currentPlayerId) {
                     const d = Math.abs(r-p.pos[0]) + Math.abs(c-p.pos[1]);
-                    if (d < 2) score -= 50; // Don't spawn too close
+                    if (d < 2) score -= 50; 
                 }
                 });
                 candidates.push({ pos: [r,c], score });
@@ -668,7 +612,6 @@
         };
 
         const planTeamStrategy = (currentPlayers, currentBoard, currentWard) => {
-            // Requirement 2, 3, 10: Hive Mind Permutation Planning
             const bossPos = currentPlayers.boss.pos;
             const teamOrders = [
             ['red', 'yellow', 'green'], ['red', 'green', 'yellow'],
@@ -679,22 +622,18 @@
             let bestTeamScore = -Infinity;
             let bestPlan = {};
 
-            // Clone data for simulation
-            const simBoard = currentBoard; // Board is mostly static structure-wise for movement validity
+            const simBoard = currentBoard; 
             
             teamOrders.forEach(order => {
             let orderScore = 0;
             let orderPlan = {};
             
-            // We need a mutable simulation state for this order
-            // Shallow copy players is not enough, we need deep copy of positions
             let simPlayers = JSON.parse(JSON.stringify(currentPlayers));
             
             order.forEach(pid => {
                 const p = simPlayers[pid];
-                if (p.isDead || p.isRecovering) return; // Skip dead
+                if (p.isDead || p.isRecovering) return; 
 
-                // Generate Hand Permutations (P(5,3))
                 const handPerms = AI_BRAIN.getHandPermutations(p.hand);
                 
                 let bestPermScore = -Infinity;
@@ -708,11 +647,9 @@
                     }
                 });
 
-                // Lock in best move for this player in this order
                 if (bestPermResult) {
                 orderScore += bestPermResult.score;
                 orderPlan[pid] = bestPermResult.sequence;
-                // CRITICAL: Update sim state so next teammate sees the new position
                 p.pos = bestPermResult.finalPos; 
                 }
             });
@@ -729,7 +666,6 @@
         const startNewRound = async (currentPlayers, currentWard, currentBoard) => {
             const p = JSON.parse(JSON.stringify(currentPlayers));
             
-            // 1. Respawns
             Object.values(p).forEach(player => {
             if (player.isRecovering) {
                 player.isRecovering = false;
@@ -746,7 +682,6 @@
             player.isShielded = false;
             });
 
-            // 2. Draw Cards
             const bossPool = shuffle([...p.boss.deck, ...p.boss.discard]);
             p.boss.discard = bossPool.slice(0, 2); 
             p.boss.hand = p.boss.isRecovering ? [] : bossPool.slice(2, 7); 
@@ -760,25 +695,20 @@
             }
             });
 
-            // 3. AI PLANNING (The New Brain)
             addLog(`🧠 AI Thinking...`);
             const bestPlan = planTeamStrategy(p, currentBoard, currentWard);
             
-            // 4. Construct Action Array based on Plan
             const newArray = Array(12).fill(null);
             for (let moveIdx = 0; moveIdx < 3; moveIdx++) {
             ['red', 'yellow', 'green'].forEach((pid, i) => {
                 const pObj = p[pid];
                 let cardToPlay = null;
 
-                // If alive and has plan
                 if (bestPlan[pid] && bestPlan[pid][moveIdx]) {
                     cardToPlay = bestPlan[pid][moveIdx];
-                    // Remove from hand (find index)
                     const idx = pObj.hand.findIndex(c => c.id === cardToPlay.id);
                     if (idx !== -1) pObj.hand.splice(idx, 1);
                 } else if (pObj.hand.length > 0) {
-                    // Fallback (shouldn't happen for alive players)
                     cardToPlay = pObj.hand.shift();
                 }
 
@@ -855,7 +785,6 @@
             const currentCell = curBoard[p.pos[0]][p.pos[1]];
             const isLocked = currentCell.type === 'lock' && currentCell.dice > 0;
 
-            // Card Type Resolution Logic (Must Match AI Simulator)
             if (effectiveType === 'unlock_heal') {
                 if (isLocked) effectiveType = 'unlock';
                 else if (p.hp < 2) effectiveType = 'heal';
@@ -870,7 +799,6 @@
 
             let targetPos = [...p.pos];
             
-            // Boss Actions
             if (action.playerId === 'boss' && effectiveType !== 'void') {
                 if (effectiveType.includes('move')) {
                     const valid = []; const [br, bc] = p.pos;
@@ -899,9 +827,7 @@
                     }
                 }
             } 
-            // AI / Player Actions
             else if (effectiveType.includes('move')) {
-                // USE DETERMINISTIC MOVE LOGIC (Matches AI Brain)
                 const allies = Object.values(curPlayers).filter(pl => pl.id !== 'boss' && pl.id !== p.id && !pl.isDead).map(pl => pl.pos);
                 targetPos = AI_BRAIN.getBestMoveTarget(p.pos, effectiveType, curBoard, curPlayers.boss.pos, allies);
             }
@@ -946,7 +872,7 @@
                     const isWardHere = p.pos[0] === curWard[0] && p.pos[1] === curWard[1];
                     const isEyeHere = curBoard[p.pos[0]][p.pos[1]].type === FIELD_TYPES.EYE;
                     if (isWardHere && isEyeHere) {
-                    logDetail = "🌑 Eclipse! Heal Failed"; // Requirement 4: Eclipse awareness in execution
+                    logDetail = "🌑 Eclipse! Heal Failed"; 
                     setFlashCell({ pos: p.pos, type: 'attack_gray' });
                     } else if (p.hp < 2) {
                     p.hp++;
@@ -1082,8 +1008,6 @@
             const nextIdx = (wardIdx + 1) % WARD_PATH.length;
             setWardPos(WARD_PATH[nextIdx]);
             if (curUnlocked >= 3) setWinner('Survivors');
-            // [修正] 修改勝利條件：當 Ward 回到 (0,1) 並且回合數大於 1 時，Boss 才獲勝。
-            // 這樣確保了 Ward 回到起點的那一回合會被完整執行。
             else if (curWard[0] === 0 && curWard[1] === 1 && gameTurn > 1) setWinner('Boss');
             else { 
             setDoomCounter(r => r - 1); 
@@ -1094,7 +1018,6 @@
 
         useEffect(() => {
             const fields = shuffle([...Array(3).fill(FIELD_TYPES.BLANK), FIELD_TYPES.EYE, ...Array(5).fill(FIELD_TYPES.LOCK)]);
-            // [修改] 將 dicePool 更新為更難的 [5, 6, 6, 7, 7]
             const dicePool = shuffle([5, 6, 6, 7, 7]);
             let dicePoolIndex = 0;
 
@@ -1146,9 +1069,56 @@
             }
         };
 
+        const [installPrompt, setInstallPrompt] = useState(null);
+
+        useEffect(() => {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(registration => {
+                            console.log('ServiceWorker registration successful:', registration.scope);
+                        })
+                        .catch(err => {
+                            console.log('ServiceWorker registration failed:', err);
+                        });
+                });
+            }
+
+            const handleBeforeInstallPrompt = (e) => {
+                e.preventDefault();
+                setInstallPrompt(e);
+            };
+
+            window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+            return () => {
+                window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            };
+        }, []);
+
+        const handleInstallClick = () => {
+            if (!installPrompt) return;
+            installPrompt.prompt();
+            installPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                setInstallPrompt(null);
+            });
+        };
+
         return (
             <div id="app-container" className="min-h-screen bg-[#1a120b] text-[#d7ccc8] font-serif select-none flex flex-col items-center py-4 px-2">
             <CinematicAction effect={cinematicEffect} />
+            
+            {installPrompt && (
+                <button 
+                    onClick={handleInstallClick}
+                    className="fixed bottom-4 right-4 z-50 bg-[#3e2723] text-[#d7ccc8] px-4 py-2 rounded-full border border-[#8d6e63] shadow-xl animate-bounce font-bold"
+                >
+                    ⬇️ 安裝 App
+                </button>
+            )}
 
             <div className="w-full max-w-[400px] flex flex-row items-stretch border-4 border-[#3e2723] rounded-3xl overflow-hidden shadow-2xl bg-[#1a120b] relative z-10">
                 <div className="flex-1 flex flex-col border-r-2 border-[#3e2723]">
@@ -1221,7 +1191,6 @@
                     {!winner && gamePhase === 'planning' && actionArray.filter(a => a?.playerId === 'boss' && a?.card).length === 3 && <button onClick={finalizePlanning} className={`absolute top-1 right-2 w-8 h-8 bg-[${THEME_COLORS.GREEN}] text-white rounded-full shadow-lg flex items-center justify-center animate-bounce border-2 border-white z-20 transition-all hover:brightness-110`}><Check size={16} strokeWidth={4} /></button>}
                     {!winner && activeSelection?.type === 'array' && <button onClick={handleReturnToHand} className="absolute top-1 left-2 w-8 h-8 bg-[#4e342e] text-[#d7ccc8] rounded-full flex items-center justify-center border-2 border-[#8d6e63] z-20 animate-pulse shadow-xl"><RotateCcw size={14}/></button>}
                     
-                    {/* Overlays */}
                     {isLogExpanded && <div className="absolute inset-0 bg-[#f5f5dc] z-30 p-2 animate-in slide-in-from-bottom duration-300" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/aged-paper.png')" }}>
                         <div className="relative flex justify-between items-center mb-1 border-b border-[#8d6e63] pb-1">
                         <span className="text-[10px] font-black uppercase text-[#3e2723]">Battle Log</span>
