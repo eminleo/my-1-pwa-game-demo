@@ -8,7 +8,7 @@
     <!-- [PWA 設定] -->
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon.png">
-    <meta name="theme-color" content="#3e2723">
+    <meta name="theme-color" content="#000000">
     
     <!-- 1. 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -27,7 +27,7 @@
             -webkit-user-select: none;
             user-select: none;
             touch-action: manipulation;
-            background-color: #1a120b;
+            background-color: #000000;
         }
     </style>
 </head>
@@ -1136,7 +1136,7 @@
         };
 
         return (
-            <div id="app-container" className="min-h-screen bg-[#1a120b] text-[#d7ccc8] font-serif select-none flex flex-col items-center py-4 px-2">
+            <div id="app-container" className="min-h-screen bg-black text-[#d7ccc8] font-serif select-none flex flex-col items-center py-4 px-2">
             <CinematicAction effect={cinematicEffect} />
             
             {installPrompt && (
@@ -1148,12 +1148,12 @@
                 </button>
             )}
 
-            <div className="w-full max-w-[400px] flex flex-row items-stretch border-4 border-[#3e2723] rounded-3xl overflow-hidden shadow-2xl bg-[#1a120b] relative z-10">
+            <div className="w-full max-w-[400px] flex flex-row items-stretch border-4 border-[#3e2723] rounded-3xl overflow-hidden shadow-2xl bg-black relative z-10">
                 <div className="flex-1 flex flex-col border-r-2 border-[#3e2723]">
-                <div id="board-container" className="p-3 bg-[#1e1a17] relative">
-                    <div className="grid grid-cols-3 gap-1.5 w-full aspect-square relative bg-[#0e0b09] rounded-xl border border-[#3e2723] shadow-inner p-1">
+                <div id="board-container" className="p-3 bg-black relative">
+                    <div className="grid grid-cols-3 gap-1.5 w-full aspect-square relative bg-black rounded-xl border border-[#3e2723] shadow-inner p-1">
                         {board.map((row, r) => row.map((cell, c) => (
-                            <div key={`${r}-${c}`} id={`cell-${r}-${c}`} onClick={() => selectableCells.some(([sr, sc]) => sr === r && sc === c) && interactionResolverRef.current([r, c])} className={`w-full aspect-square rounded-lg border-2 flex flex-col items-center justify-center relative transition-all duration-300 overflow-hidden ${cell.type === 'lock' ? 'bg-[#29201a] border-[#5d4037]' : cell.type === 'eye' ? `bg-[${THEME_COLORS.BLUE}]/20 border-[${THEME_COLORS.BLUE}]` : 'bg-[#231e1b] border-[#443e3b]'} ${wardPos[0] === r && wardPos[1] === c ? `border-[${THEME_COLORS.PURPLE}] shadow-[inset_0_0_20px_rgba(106,13,173,0.3)]` : ''} ${selectableCells.some(([sr, sc]) => sr === r && sc === c) ? 'cursor-pointer border-green-500 bg-green-500/20 animate-pulse z-20 shadow-2xl' : ''} ${flashCell?.pos[0] === r && flashCell?.pos[1] === c ? (
+                            <div key={`${r}-${c}`} id={`cell-${r}-${c}`} onClick={() => selectableCells.some(([sr, sc]) => sr === r && sc === c) && interactionResolverRef.current([r, c])} className={`w-full aspect-square rounded-lg border-2 flex flex-col items-center justify-center relative transition-all duration-300 overflow-hidden ${cell.type === 'lock' ? 'bg-[#29201a] border-[#5d4037]' : cell.type === 'eye' ? `bg-[#392855] border-[${THEME_COLORS.BLUE}]` : 'bg-[#231e1b] border-[#443e3b]'} ${wardPos[0] === r && wardPos[1] === c ? `border-[${THEME_COLORS.PURPLE}] shadow-[inset_0_0_20px_rgba(106,13,173,0.3)]` : ''} ${selectableCells.some(([sr, sc]) => sr === r && sc === c) ? 'cursor-pointer border-green-500 bg-green-500/20 animate-pulse z-20 shadow-2xl' : ''} ${flashCell?.pos[0] === r && flashCell?.pos[1] === c ? (
                                         flashCell.type === 'damage' ? `bg-[${THEME_COLORS.RED}]/60 animate-shake` : 
                                         flashCell.type === 'unlock' ? `bg-[${THEME_COLORS.YELLOW}]/60 animate-pulse` :
                                         flashCell.type === 'heal_success' ? `bg-[${THEME_COLORS.GREEN}]/60` :
@@ -1180,7 +1180,7 @@
                     </div>
                 </div>
 
-                <div className="px-3 py-1 bg-[#251d18] border-b-2 border-[#3e2723] flex justify-between items-center shadow-lg relative z-10">
+                <div className="px-3 py-1 bg-black border-b-2 border-[#3e2723] flex justify-between items-center shadow-lg relative z-10">
                     <div className="flex items-center gap-4">
                         <div className="flex gap-0.5">
                         {[...Array(Math.max(0, doomCounter))].map((_, i) => (
@@ -1191,11 +1191,11 @@
                     </div>
                     <button onClick={() => setIsLogExpanded(!isLogExpanded)} className="p-1 bg-[#1a120b] border border-[#5d4037] rounded transition-colors hover:border-[#ffa000]"><List size={12}/></button>
                 </div>
-                <div className="px-2 py-2 flex gap-1 bg-[#1b120c] border-b-2 border-[#3e2723]">{Object.values(players).map(p => <MiniStatus key={p.id} player={p} onClick={setViewingDiscard} />)}</div>
+                <div className="px-2 py-2 flex gap-1 bg-black border-b-2 border-[#3e2723]">{Object.values(players).map(p => <MiniStatus key={p.id} player={p} onClick={setViewingDiscard} />)}</div>
                 
-                <div className="h-[140px] p-2 bg-[#d7ccc8] relative bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] shadow-inner">
+                <div className="h-[140px] p-2 bg-black relative shadow-inner">
                     {winner ? (
-                        <div className="h-full w-full flex flex-col items-center justify-center bg-[#1a120b]/80 rounded border-2 border-[#3e2723] z-20 animate-in zoom-in duration-500">
+                        <div className="h-full w-full flex flex-col items-center justify-center bg-[#f5f5dc] rounded border-2 border-[#3e2723] z-20 animate-in zoom-in duration-500" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/lined-paper-2.png')" }}>
                         <h2 className={`text-3xl font-black italic tracking-tighter uppercase font-serif drop-shadow-md ${winner === 'Boss' ? 'text-[#ffb300]' : 'text-[#e53935]'}`}>
                             {winner === 'Boss' ? 'VICTORY' : 'DEFEAT'}
                         </h2>
@@ -1219,7 +1219,7 @@
                     {!winner && gamePhase === 'planning' && actionArray.filter(a => a?.playerId === 'boss' && a?.card).length === 3 && <button onClick={finalizePlanning} className={`absolute top-1 right-2 w-8 h-8 bg-[${THEME_COLORS.GREEN}] text-white rounded-full shadow-lg flex items-center justify-center animate-bounce border-2 border-white z-20 transition-all hover:brightness-110`}><Check size={16} strokeWidth={4} /></button>}
                     {!winner && activeSelection?.type === 'array' && <button onClick={handleReturnToHand} className="absolute top-1 left-2 w-8 h-8 bg-[#4e342e] text-[#d7ccc8] rounded-full flex items-center justify-center border-2 border-[#8d6e63] z-20 animate-pulse shadow-xl"><RotateCcw size={14}/></button>}
                     
-                    {isLogExpanded && <div className="absolute inset-0 bg-[#f5f5dc] z-30 p-2 animate-in slide-in-from-bottom duration-300" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/aged-paper.png')" }}>
+                    {isLogExpanded && <div className="absolute inset-0 bg-[#f5f5dc] z-30 p-2 animate-in slide-in-from-bottom duration-300" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/lined-paper-2.png')" }}>
                         <div className="relative flex justify-between items-center mb-1 border-b border-[#8d6e63] pb-1">
                         <span className="text-[10px] font-black uppercase text-[#3e2723]">Battle Log</span>
                         <button 
@@ -1233,15 +1233,15 @@
                         <div className="h-[105px] overflow-y-auto font-serif text-[9px] space-y-1 text-[#3e2723] leading-relaxed custom-scrollbar">{logs.map((l, i) => <div key={i} className="border-b border-[#8d6e63]/20 pb-0.5">{String(l)}</div>)}</div>
                     </div>}
 
-                    {viewingDiscard && <div className="absolute inset-0 bg-[#f5f5dc] z-30 p-2 animate-in slide-in-from-bottom duration-300" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/aged-paper.png')" }}>
+                    {viewingDiscard && <div className="absolute inset-0 bg-[#f5f5dc] z-30 p-2 animate-in slide-in-from-bottom duration-300" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/lined-paper-2.png')" }}>
                         <div className="flex justify-between items-center mb-1 border-b border-[#8d6e63] pb-1"><h3 className="text-[10px] font-black text-[#3e2723] uppercase tracking-widest flex items-center gap-1"><span className="text-[12px]">{getPlayerIcon(viewingDiscard.id)}</span> DISCARD</h3><X size={14} onClick={() => setViewingDiscard(null)} className="text-[#5d4037] cursor-pointer"/></div>
                         <div className="h-[105px] overflow-y-auto text-[9px] space-y-1 uppercase font-bold text-[#5d4037] tracking-tighter custom-scrollbar">{viewingDiscard.discard.length === 0 ? <p className="italic opacity-30 text-center py-4">Empty</p> : viewingDiscard.discard.map((card, idx) => (<div key={idx} className="flex justify-between items-center border-b border-[#8d6e63]/20 py-0.5"><span>{card.name}</span><ActionIcons type={card.type} size={10} dark={true} /></div>))}</div>
                     </div>}
                 </div>
                 </div>
 
-                <div className="w-[85px] flex flex-col bg-[#1a120b] shadow-2xl relative border-l-2 border-[#3e2723]">
-                <div className="flex-grow flex flex-col p-1 gap-1 bg-[#120e0b] h-full overflow-hidden">
+                <div className="w-[85px] flex flex-col bg-black shadow-2xl relative border-l-2 border-[#3e2723]">
+                <div className="flex-grow flex flex-col p-1 gap-1 bg-black h-full overflow-hidden">
                     {actionArray.map((action, i) => {
                         const isBossSlot = i % 4 === 3;
                         const isActive = resolvingIndex === i;
