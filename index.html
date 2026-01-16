@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo v5.11</title>
+    <title>Demo v5.17</title>
 
     <!-- [PWA 設定] -->
     <link rel="manifest" href="./manifest.json">
@@ -120,22 +120,34 @@
 
         const WARD_PATH = [[0, 1], [0, 2], [1, 2], [2, 2], [2, 1], [2, 0], [1, 0], [0, 0]];
         const FIELD_TYPES = { BLANK: 'blank', EYE: 'eye', LOCK: 'lock' };
-        const FLASH_DURATION = 600; 
+        const FLASH_DURATION = 500; 
 
         const THEME_COLORS = {
-        RED: '#D72600',
-        BLUE: '#0956BF',
-        GREEN: '#379711',
-        YELLOW: '#ECD407',
-        PURPLE: '#6a0dad',
-        GOLD: '#FFD700' 
+            RED: '#D72600',
+            BLUE: '#0956BF',
+            GREEN: '#379711',
+            YELLOW: '#ECD407',
+            PURPLE: '#6a0dad',
+            GOLD: '#FFD700',
+            WHITE: '#FFFFFF',
+            BLACK: '#000000',
+            STONE_300: '#d6d3d1', 
+            SLATE_400: '#94a3b8', 
+            GRAY_500: '#6b7280',  
+            AMBER_500: '#f59e0b', 
+            BROWN_DARK: '#3e2723',
+            BROWN_LIGHT: '#d7ccc8',
+            BROWN_MID: '#8d6e63',
+            BG_DARK: '#0c0a09',
+            BG_PANEL: '#1c1917',
+            PAPER_BEIGE: '#f5f5dc'
         };
 
         const COLORS = {
-        purple: THEME_COLORS.PURPLE, 
-        red: THEME_COLORS.RED,        
-        yellow: THEME_COLORS.YELLOW, 
-        green: THEME_COLORS.GREEN    
+            purple: THEME_COLORS.PURPLE, 
+            red: THEME_COLORS.RED,        
+            yellow: THEME_COLORS.YELLOW, 
+            green: THEME_COLORS.GREEN    
         };
 
         const INITIAL_BOSS_DECK = [
@@ -375,13 +387,13 @@
         const icons = [];
         const isCardMode = dark && !isFlying;
         
-        const tacticalColor = isCardMode ? "text-black" : (isFlying ? "text-white" : "text-stone-300"); 
-        const attackColor = isCardMode ? "text-black" : `text-[${THEME_COLORS.RED}]`; 
-        const unlockColor = isCardMode ? "text-black" : `text-[${THEME_COLORS.YELLOW}]`; 
-        const healColor = isCardMode ? "text-black" : `text-[${THEME_COLORS.GREEN}]`; 
-        const shieldColor = isCardMode ? "text-black" : `text-[${THEME_COLORS.BLUE}]`; 
-        const specialColor = isCardMode ? "text-black" : (isFlying ? "text-white" : `text-[${THEME_COLORS.PURPLE}]`);
-        const voidColor = isFlying ? "text-white drop-shadow-md" : "text-slate-400"; 
+        const tacticalColor = isCardMode ? "text-[#000000]" : (isFlying ? "text-[#FFFFFF]" : `text-[${THEME_COLORS.STONE_300}]`); 
+        const attackColor = isCardMode ? "text-[#000000]" : `text-[${THEME_COLORS.RED}]`; 
+        const unlockColor = isCardMode ? "text-[#000000]" : `text-[${THEME_COLORS.YELLOW}]`; 
+        const healColor = isCardMode ? "text-[#000000]" : `text-[${THEME_COLORS.GREEN}]`; 
+        const shieldColor = isCardMode ? "text-[#000000]" : `text-[${THEME_COLORS.BLUE}]`; 
+        const specialColor = isCardMode ? "text-[#000000]" : (isFlying ? "text-[#FFFFFF]" : `text-[${THEME_COLORS.PURPLE}]`);
+        const voidColor = isFlying ? "text-[#FFFFFF] drop-shadow-md" : `text-[${THEME_COLORS.SLATE_400}]`; 
 
         if (isFlying) {
             if (type === 'attack') return <Sword size={size} className={attackColor} />;
@@ -461,13 +473,13 @@
                     }}
                 >
                     <div 
-                    className={`w-9 h-9 md:w-11 md:h-11 rounded-full border-2 border-black/40 flex items-center justify-center shadow-xl transition-all duration-300 ring-1 ring-white/20`}
+                    className={`w-9 h-9 md:w-11 md:h-11 rounded-full border-2 border-[#00000066] flex items-center justify-center shadow-xl transition-all duration-300 ring-1 ring-[#ffffff33]`}
                     style={{ 
                         ...backgroundStyle,
                         transform: `translate(${offsetX}px, ${offsetY}px) scale(0.85)`
                     }}
                     >
-                    <div className="text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] flex items-center justify-center w-full h-full">
+                    <div className="text-[#FFFFFF] drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] flex items-center justify-center w-full h-full">
                         {p.isShielded ? (
                             <Shield size={18} />
                         ) : p.id === 'boss' ? (
@@ -498,7 +510,7 @@
         return (
             <div onClick={() => onClick(player)} 
             className={`flex-1 p-1.5 rounded-lg border-2 flex items-center gap-2 transition-all cursor-pointer 
-            ${player.isDead || player.isRecovering ? 'opacity-40 grayscale bg-[#0c0a09]' : 'bg-[#1c1917] shadow-md hover:border-white'}`}
+            ${player.isDead || player.isRecovering ? `opacity-40 grayscale bg-[${THEME_COLORS.BG_DARK}]` : `bg-[${THEME_COLORS.BG_PANEL}] shadow-md hover:border-[#FFFFFF]`}`}
             style={{ borderColor: statusColor }}
             >
             <div className="flex flex-col gap-0.5 justify-center">
@@ -516,7 +528,7 @@
                 )}
             </div>
             <div className="flex flex-col gap-0.5 text-[7px] font-bold opacity-90 flex-1 font-serif text-[#d7ccc8]">
-                <div className="flex items-center gap-1"><Layers size={8} className="text-[#8d6e63]"/>{player.deck.length}</div>
+                <div className="flex items-center gap-1"><Layers size={8} className={`text-[${THEME_COLORS.BROWN_MID}]`}/>{player.deck.length}</div>
                 <div className="flex items-center gap-1"><Archive size={8} className="text-[#5d4037]"/>{player.discard.length}</div>
             </div>
             </div>
@@ -528,10 +540,10 @@
         const { iconType, color, start, center, end } = effect; 
 
         const colorMap = {
-            purple: `text-[${THEME_COLORS.PURPLE}] drop-shadow-[0_0_15px_${THEME_COLORS.PURPLE}] border-[${THEME_COLORS.PURPLE}]/50 bg-[${THEME_COLORS.PURPLE}]/40`,
-            red: `text-[${THEME_COLORS.RED}] drop-shadow-[0_0_15px_${THEME_COLORS.RED}] border-[${THEME_COLORS.RED}]/50 bg-[${THEME_COLORS.RED}]/40`,
-            yellow: `text-[${THEME_COLORS.YELLOW}] drop-shadow-[0_0_15px_${THEME_COLORS.YELLOW}] border-[${THEME_COLORS.YELLOW}]/50 bg-[${THEME_COLORS.YELLOW}]/40`,
-            green: `text-[${THEME_COLORS.GREEN}] drop-shadow-[0_0_15px_${THEME_COLORS.GREEN}] border-[${THEME_COLORS.GREEN}]/50 bg-[${THEME_COLORS.GREEN}]/40`
+            purple: `text-[${THEME_COLORS.PURPLE}] drop-shadow-[0_0_15px_${THEME_COLORS.PURPLE}] border-[${THEME_COLORS.PURPLE}80] bg-[${THEME_COLORS.PURPLE}66]`,
+            red: `text-[${THEME_COLORS.RED}] drop-shadow-[0_0_15px_${THEME_COLORS.RED}] border-[${THEME_COLORS.RED}80] bg-[${THEME_COLORS.RED}66]`,
+            yellow: `text-[${THEME_COLORS.YELLOW}] drop-shadow-[0_0_15px_${THEME_COLORS.YELLOW}] border-[${THEME_COLORS.YELLOW}80] bg-[${THEME_COLORS.YELLOW}66]`,
+            green: `text-[${THEME_COLORS.GREEN}] drop-shadow-[0_0_15px_${THEME_COLORS.GREEN}] border-[${THEME_COLORS.GREEN}80] bg-[${THEME_COLORS.GREEN}66]`
         };
         const styleClass = colorMap[color] || colorMap.purple;
 
@@ -565,7 +577,7 @@
         
         const [wardPos, setWardPos] = useState([0, 1]);
         const [unlockedCount, setUnlockedCount] = useState(0);
-        const [doomCounter, setDoomCounter] = useState(9); 
+        const [doomCounter, setDoomCounter] = useState(8); 
         const [gameTurn, setGameTurn] = useState(1); 
         const [gamePhase, setGamePhase] = useState('setup'); 
         const [actionArray, setActionArray] = useState(Array(12).fill(null)); 
@@ -1006,7 +1018,11 @@
             }
 
             setPlayers({ ...curPlayers }); setBoard([...curBoard]); setUnlockedCount(curUnlocked);
-            await new Promise(r => setTimeout(r, FLASH_DURATION)); setFlashCell(null);
+            
+            await new Promise(r => setTimeout(r, FLASH_DURATION)); 
+            setFlashCell(null);
+            
+            await new Promise(r => setTimeout(r, 500));
             }
 
             Object.values(curPlayers).forEach(p => {
@@ -1036,7 +1052,7 @@
 
         useEffect(() => {
             const fields = shuffle([...Array(3).fill(FIELD_TYPES.BLANK), FIELD_TYPES.EYE, ...Array(5).fill(FIELD_TYPES.LOCK)]);
-            const dicePool = shuffle([6, 6, 6, 7, 7]);
+            const dicePool = shuffle([6, 6, 7, 7, 7]); 
             let dicePoolIndex = 0;
 
             const newBoard = [];
@@ -1136,7 +1152,7 @@
         };
 
         return (
-            <div id="app-container" className="min-h-screen bg-black text-[#d7ccc8] font-serif select-none flex flex-col items-center py-4 px-2">
+            <div id="app-container" className="min-h-screen bg-[#000000] text-[#d7ccc8] font-serif select-none flex flex-col items-center py-4 px-2">
             <CinematicAction effect={cinematicEffect} />
             
             {installPrompt && (
@@ -1148,54 +1164,82 @@
                 </button>
             )}
 
-            <div className="w-full max-w-[400px] flex flex-row items-stretch border-4 border-[#3e2723] rounded-3xl overflow-hidden shadow-2xl bg-black relative z-10">
+            <div className="w-full max-w-[400px] flex flex-row items-stretch border-4 border-[#3e2723] rounded-3xl overflow-hidden shadow-2xl bg-[#000000] relative z-10">
                 <div className="flex-1 flex flex-col border-r-2 border-[#3e2723]">
-                <div id="board-container" className="p-3 bg-black relative">
-                    <div className="grid grid-cols-3 gap-1.5 w-full aspect-square relative bg-black rounded-xl border border-[#3e2723] shadow-inner p-1">
+                <div id="board-container" className="p-3 bg-[#000000] relative">
+                    <div className="grid grid-cols-3 gap-1.5 w-full aspect-square relative bg-[#000000] rounded-xl border border-[#3e2723] shadow-inner p-1">
                         {board.map((row, r) => row.map((cell, c) => (
-                            <div key={`${r}-${c}`} id={`cell-${r}-${c}`} onClick={() => selectableCells.some(([sr, sc]) => sr === r && sc === c) && interactionResolverRef.current([r, c])} className={`w-full aspect-square rounded-lg border-2 flex flex-col items-center justify-center relative transition-all duration-300 overflow-hidden ${cell.type === 'lock' ? 'bg-[#29201a] border-[#5d4037]' : cell.type === 'eye' ? `bg-[#392855] border-[${THEME_COLORS.BLUE}]` : 'bg-[#231e1b] border-[#443e3b]'} ${wardPos[0] === r && wardPos[1] === c ? `border-[${THEME_COLORS.PURPLE}] shadow-[inset_0_0_20px_rgba(106,13,173,0.3)]` : ''} ${selectableCells.some(([sr, sc]) => sr === r && sc === c) ? 'cursor-pointer border-green-500 bg-green-500/20 animate-pulse z-20 shadow-2xl' : ''} ${flashCell?.pos[0] === r && flashCell?.pos[1] === c ? (
-                                        flashCell.type === 'damage' ? `bg-[${THEME_COLORS.RED}]/60 animate-shake` : 
-                                        flashCell.type === 'unlock' ? `bg-[${THEME_COLORS.YELLOW}]/60 animate-pulse` :
-                                        flashCell.type === 'heal_success' ? `bg-[${THEME_COLORS.GREEN}]/60` :
-                                        flashCell.type === 'attack_gray' ? `bg-gray-500/60` :
+                            <div key={`${r}-${c}`} id={`cell-${r}-${c}`} onClick={() => selectableCells.some(([sr, sc]) => sr === r && sc === c) && interactionResolverRef.current([r, c])} 
+                            className={`w-full aspect-square rounded-lg border-2 flex flex-col items-center justify-center relative transition-all duration-300 overflow-hidden 
+                            ${cell.type === 'lock' ? `bg-[#29201a] border-[#5d4037]` : cell.type === 'eye' ? `bg-[#392855] border-[${THEME_COLORS.BLUE}]` : 'bg-[#231e1b] border-[#443e3b]'} 
+                            ${wardPos[0] === r && wardPos[1] === c ? `border-[${THEME_COLORS.PURPLE}] shadow-[inset_0_0_20px_rgba(106,13,173,0.3)]` : ''} 
+                            ${selectableCells.some(([sr, sc]) => sr === r && sc === c) ? `cursor-pointer border-[${THEME_COLORS.GREEN}] bg-[${THEME_COLORS.GREEN}]/20 animate-pulse z-20 shadow-2xl` : ''} 
+                            ${flashCell?.pos[0] === r && flashCell?.pos[1] === c ? (
+                                        flashCell.type === 'damage' ? `bg-[${THEME_COLORS.RED}99] animate-shake` : 
+                                        flashCell.type === 'unlock' ? `bg-[${THEME_COLORS.YELLOW}99] animate-pulse` :
+                                        flashCell.type === 'heal_success' ? `bg-[${THEME_COLORS.GREEN}99]` :
+                                        flashCell.type === 'shield' ? `bg-[${THEME_COLORS.BLUE}99]` :
+                                        flashCell.type === 'attack_gray' ? `bg-[#6b728099]` :
                                     `bg-[${THEME_COLORS.YELLOW}]/40`
                                     ) : ''}`}>
-                            <div className="absolute top-0 right-0 p-0.5 flex items-center gap-1 z-[60]">
+                            
+                            {flashCell?.pos[0] === r && flashCell?.pos[1] === c && flashCell.type === 'damage' && (
+                                <div className="absolute inset-0 rounded-full border border-[#6a0dad] animate-ripple z-50"></div>
+                            )}
+
+                            <div className="absolute top-1 right-1 flex items-center gap-1 z-[60]">
                                 {cell.hourglass && <div className="animate-hourglass-glow"><Hourglass size={12} className={`text-[${THEME_COLORS.BLUE}]`} /></div>}
-                                {cell.type === 'lock' && cell.dice > 0 && <div className="w-5 h-5 bg-[#d7ccc8] text-[#3e2723] rounded flex items-center justify-center font-black text-[10px] border border-[#8d6e63]">{cell.dice}</div>}
-                                {cell.type === 'eye' && <div className={`bg-[${THEME_COLORS.BLUE}]/40 p-0.5 rounded`}><Eye size={14} className={`text-[${THEME_COLORS.BLUE}]`} /></div>}
-                            </div>
-                            <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none p-4">
-                                {cell.type === 'lock' && <Key size={48} className="text-[#8d6e63]" />}
+                                
+                                {cell.type === 'lock' && cell.dice > 0 && (
+                                    <div className="w-5 h-5 bg-[#d7ccc8] text-[#3e2723] rounded flex items-center justify-center border border-[#8d6e63] shadow-sm">
+                                        <span className="text-[10px] font-black leading-none">{cell.dice}</span>
+                                    </div>
+                                )}
+                                
                                 {cell.type === 'eye' && (
-                                (wardPos[0] === r && wardPos[1] === c) ? 
-                                <Moon size={48} className="text-white drop-shadow-md" /> : 
-                                <Eye size={48} className={`text-[${THEME_COLORS.BLUE}]`} />
+                                    <div className={`w-5 h-5 bg-[${THEME_COLORS.BLUE}66] border border-[${THEME_COLORS.BLUE}] rounded flex items-center justify-center shadow-sm`}>
+                                         <Eye size={12} className={`text-[${THEME_COLORS.BLUE}]`} />
+                                    </div>
                                 )}
                             </div>
-                            {wardPos[0] === r && wardPos[1] === c && <div className={`absolute top-1 left-1 bg-[${THEME_COLORS.PURPLE}]/40 p-0.5 rounded`}><Eye size={14} className={`text-[${THEME_COLORS.PURPLE}] animate-pulse`} /></div>}
+
+                            <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none p-4">
+                                {cell.type === 'lock' && <Key size={30} className="text-[#8d6e63]" />}
+                                {cell.type === 'eye' && (
+                                (wardPos[0] === r && wardPos[1] === c) ? 
+                                <Moon size={48} className="text-[#FFFFFF] drop-shadow-md" /> : 
+                                <Eye size={48} className={`text-[${THEME_COLORS.BLUE}] animate-blink`} />
+                                )}
+                            </div>
+                            
+                            {wardPos[0] === r && wardPos[1] === c && (
+                                <div className={`absolute top-1 left-1 w-5 h-5 bg-[${THEME_COLORS.PURPLE}66] border border-[${THEME_COLORS.PURPLE}] rounded flex items-center justify-center shadow-[0_0_5px_rgba(106,13,173,0.5)] z-[60]`}>
+                                    <Eye size={12} className={`text-[${THEME_COLORS.PURPLE}] animate-pulse`} />
+                                </div>
+                            )}
+
                             </div>
                         )))}
                         <TokenLayer players={players} />
                     </div>
                 </div>
 
-                <div className="px-3 py-1 bg-black border-b-2 border-[#3e2723] flex justify-between items-center shadow-lg relative z-10">
+                <div className="px-3 py-1 bg-[#000000] border-b-2 border-[#3e2723] flex justify-between items-center shadow-lg relative z-10">
                     <div className="flex items-center gap-4">
                         <div className="flex gap-0.5">
                         {[...Array(Math.max(0, doomCounter))].map((_, i) => (
-                            <Moon key={i} size={12} className="text-white fill-white" />
+                            <Moon key={i} size={12} className="text-[#FFFFFF] fill-[#FFFFFF]" />
                         ))}
                         </div>
                         <div className="flex gap-1.5">{[...Array(3)].map((_, i) => (<Key key={i} size={12} className={i < unlockedCount ? `text-[${THEME_COLORS.GOLD}] fill-[${THEME_COLORS.GOLD}]` : "text-[#4e342e]"} />))}</div>
                     </div>
                     <button onClick={() => setIsLogExpanded(!isLogExpanded)} className="p-1 bg-[#1a120b] border border-[#5d4037] rounded transition-colors hover:border-[#ffa000]"><List size={12}/></button>
                 </div>
-                <div className="px-2 py-2 flex gap-1 bg-black border-b-2 border-[#3e2723]">{Object.values(players).map(p => <MiniStatus key={p.id} player={p} onClick={setViewingDiscard} />)}</div>
+                <div className="px-2 py-2 flex gap-1 bg-[#000000] border-b-2 border-[#3e2723]">{Object.values(players).map(p => <MiniStatus key={p.id} player={p} onClick={setViewingDiscard} />)}</div>
                 
-                <div className="h-[140px] p-2 bg-black relative shadow-inner">
+                <div className="h-[140px] p-2 bg-[#000000] relative shadow-inner">
                     {winner ? (
-                        <div className="h-full w-full flex flex-col items-center justify-center bg-[#f5f5dc] rounded border-2 border-[#3e2723] z-20 animate-in zoom-in duration-500" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/lined-paper-2.png')" }}>
+                        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#f5f5dc] animate-in zoom-in duration-500" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/lined-paper-2.png')" }}>
                         <h2 className={`text-3xl font-black italic tracking-tighter uppercase font-serif drop-shadow-md ${winner === 'Boss' ? 'text-[#ffb300]' : 'text-[#e53935]'}`}>
                             {winner === 'Boss' ? 'VICTORY' : 'DEFEAT'}
                         </h2>
@@ -1240,8 +1284,8 @@
                 </div>
                 </div>
 
-                <div className="w-[85px] flex flex-col bg-black shadow-2xl relative border-l-2 border-[#3e2723]">
-                <div className="flex-grow flex flex-col p-1 gap-1 bg-black h-full overflow-hidden">
+                <div className="w-[85px] flex flex-col bg-[#000000] shadow-2xl relative border-l-2 border-[#3e2723]">
+                <div className="flex-grow flex flex-col p-1 gap-1 bg-[#000000] h-full overflow-hidden">
                     {actionArray.map((action, i) => {
                         const isBossSlot = i % 4 === 3;
                         const isActive = resolvingIndex === i;
@@ -1253,16 +1297,16 @@
                         return (
                         <div key={i} id={`slot-${i}`} onClick={() => isBossSlot && handleItemClick('array', i)} 
                             className={`flex-1 min-h-0 w-full rounded border-4 flex flex-col items-center justify-center relative transition-all 
-                            ${action ? 'bg-[#f5f5dc]' : (isBossSlot ? `border-dashed border-[${THEME_COLORS.PURPLE}]/30` : 'border-dashed border-[#3e2723]')} 
-                            ${isActive ? 'ring-4 ring-amber-500 shadow-[0_0_20px_#f59e0b] brightness-110 z-20' : ''}
+                            ${action ? 'bg-[#f5f5dc]' : (isBossSlot ? `border-dashed border-[${THEME_COLORS.PURPLE}4d]` : 'border-dashed border-[#3e2723]')} 
+                            ${isActive ? 'ring-4 ring-[#f59e0b] shadow-[0_0_20px_#f59e0b] brightness-110 z-20' : ''}
                             ${isResolved ? 'opacity-50 grayscale' : ''}
-                            ${isPlacementTarget ? `animate-border-flash bg-[${THEME_COLORS.PURPLE}]/10 cursor-pointer` : ''}
+                            ${isPlacementTarget ? `animate-border-flash bg-[${THEME_COLORS.PURPLE}1a] cursor-pointer` : ''}
                             `}
                             style={action ? { borderColor: getHardCodedPlayerBorder(players[action.playerId].color), backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')", boxShadow: 'inset 0 0 5px rgba(0,0,0,0.2)' } : {}}
                         >
                             {action && isRevealed && <ActionIcons type={action.card.type} size={14} dark={true} />}
                             {!action && <span className="text-[7px] opacity-10 uppercase tracking-tighter font-mono">{isBossSlot ? 'BOSS' : i+1}</span>}
-                            {isResolved && action && <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded"><Check size={24} className={`text-[${THEME_COLORS.GREEN}] font-bold drop-shadow-md`} /></div>}
+                            {isResolved && action && <div className="absolute inset-0 flex items-center justify-center bg-[#0000001a] rounded"><Check size={24} className={`text-[${THEME_COLORS.GREEN}] font-bold drop-shadow-md`} /></div>}
                             {i % 4 === 0 && <div className="absolute left-[-15px] top-1/2 -translate-y-1/2 text-[5px] text-[#8d6e63] font-bold transform -rotate-90">M{Math.floor(i/4)+1}</div>}
                         </div>
                         );
@@ -1282,8 +1326,24 @@
                 0%, 100% { border-color: #6a0dad; box-shadow: 0 0 5px #6a0dad; } 
                 50% { border-color: #ffffff; box-shadow: 0 0 10px #ffffff; } 
                 }
+                
+                /* 邪惡眨眼動畫 */
+                @keyframes eye-blink {
+                0%, 48%, 52%, 100% { transform: scaleY(1); }
+                50% { transform: scaleY(0.1); }
+                }
+
+                /* 傷害擴散波紋動畫 */
+                @keyframes ripple-effect {
+                0% { transform: scale(0.5); opacity: 1; border-width: 2px; }
+                100% { transform: scale(2.0); opacity: 0; border-width: 0px; }
+                }
+
                 .animate-cinematic-fly { animation: fly 3s cubic-bezier(0.16, 1, 0.3, 1) forwards; position: fixed; }
                 .animate-border-flash { animation: border-flash 3s infinite; }
+                .animate-blink { animation: eye-blink 12s infinite; }
+                .animate-ripple { animation: ripple-effect 0.5s ease-out forwards; }
+                
                 @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-3px); } 60% { transform: translateX(3px); } }
                 @keyframes hourglass-glow { 0%, 100% { opacity: 0.8; transform: scale(1) rotate(0deg); } 50% { opacity: 1; transform: scale(1.3) rotate(180deg); } }
                 .animate-hourglass-glow { animation: hourglass-glow 3s ease-in-out infinite; }
