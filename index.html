@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo v5.21</title>
+    <title>Demo v5.20</title>
 
     <!-- [PWA 設定] -->
     <link rel="manifest" href="./manifest.json">
@@ -765,7 +765,7 @@
             }
 
             setCinematicEffect({ iconType, color: players[playerId].color, start: startPos, center: centerPos, end: endPos });
-            setTimeout(() => { setCinematicEffect(null); resolve(); }, 2000);
+            setTimeout(() => { setCinematicEffect(null); resolve(); }, 3000);
             });
         };
 
@@ -1339,7 +1339,7 @@
                 100% { transform: scale(2.0); opacity: 0; border-width: 0px; }
                 }
 
-                .animate-cinematic-fly { animation: fly 2s cubic-bezier(0.16, 1, 0.3, 1) forwards; position: fixed; }
+                .animate-cinematic-fly { animation: fly 3s cubic-bezier(0.16, 1, 0.3, 1) forwards; position: fixed; }
                 .animate-border-flash { animation: border-flash 3s infinite; }
                 .animate-blink { animation: eye-blink 12s infinite; }
                 .animate-ripple { animation: ripple-effect 0.5s ease-out forwards; }
