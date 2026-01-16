@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo v5.18</title>
+    <title>Demo v5.20</title>
 
     <!-- [PWA 設定] -->
     <link rel="manifest" href="./manifest.json">
@@ -1191,14 +1191,14 @@
                                 {cell.hourglass && <div className="animate-hourglass-glow"><Hourglass size={12} className={`text-[${THEME_COLORS.BLUE}]`} /></div>}
                                 
                                 {cell.type === 'lock' && cell.dice > 0 && (
-                                    <div className="w-3 h-3 bg-[#d7ccc8] text-[#3e2723] rounded-[2px] flex items-center justify-center border border-[#8d6e63] shadow-sm">
-                                        <span className="text-[8px] font-black leading-none">{cell.dice}</span>
+                                    <div className="w-[18px] h-[18px] bg-[#d7ccc8] text-[#3e2723] rounded-[3px] flex items-center justify-center border border-[#8d6e63] shadow-sm">
+                                        <span className="text-[10px] font-black leading-none">{cell.dice}</span>
                                     </div>
                                 )}
                                 
                                 {cell.type === 'eye' && (
-                                    <div className={`w-3 h-3 bg-[${THEME_COLORS.BLUE}66] border border-[${THEME_COLORS.BLUE}] rounded-[2px] flex items-center justify-center shadow-sm`}>
-                                         <Eye size={8} className={`text-[${THEME_COLORS.BLUE}]`} />
+                                    <div className={`w-[18px] h-[18px] bg-[${THEME_COLORS.BLUE}66] border border-[${THEME_COLORS.BLUE}] rounded-[3px] flex items-center justify-center shadow-sm`}>
+                                         <Eye size={10} className={`text-[${THEME_COLORS.BLUE}]`} />
                                     </div>
                                 )}
                             </div>
@@ -1213,8 +1213,8 @@
                             </div>
                             
                             {wardPos[0] === r && wardPos[1] === c && (
-                                <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-[${THEME_COLORS.PURPLE}66] border border-[${THEME_COLORS.PURPLE}] rounded-[2px] flex items-center justify-center shadow-[0_0_5px_rgba(106,13,173,0.5)] z-[60]`}>
-                                    <Eye size={8} className={`text-[${THEME_COLORS.PURPLE}] animate-pulse`} />
+                                <div className={`absolute top-1 left-1 w-[18px] h-[18px] bg-[${THEME_COLORS.PURPLE}66] border border-[${THEME_COLORS.PURPLE}] rounded-[3px] flex items-center justify-center shadow-[0_0_5px_rgba(106,13,173,0.5)] z-[60]`}>
+                                    <Eye size={10} className={`text-[${THEME_COLORS.PURPLE}] animate-pulse`} />
                                 </div>
                             )}
 
