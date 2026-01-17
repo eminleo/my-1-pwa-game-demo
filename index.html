@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo v5.22</title>
+    <title>Demo v5.21</title>
 
     <!-- [PWA 設定] -->
     <link rel="manifest" href="./manifest.json">
@@ -206,7 +206,7 @@
         };
 
         const AI_BRAIN = {
-        getThreatScore: (aiPos, bossPos, hasShield, isEclipse, unlockedCount) => {
+        getThreatScore: (aiPos, bossPos, hasShield, isEclipse) => {
             const dist = Math.abs(aiPos[0] - bossPos[0]) + Math.abs(aiPos[1] - bossPos[1]);
             const isBossCorner = (bossPos[0]===0||bossPos[0]===2) && (bossPos[1]===0||bossPos[1]===2);
             let score = 0;
@@ -214,18 +214,8 @@
             score = -2000; 
             }
             else if (dist === 1) {
-            if (unlockedCount >= 2) {
-                // 殘局邏輯 (只剩 1 個鎖)
-                if (hasShield && !isEclipse) {
-                score = 100; // 方案二：有盾坦克，鼓勵進攻 (+100)
-                } else {
-                score = -100; // 方案一：腎上腺素，降低恐懼 (從 -500 變 -100)
-                }
-            } else {
-                // 正常邏輯
-                if (hasShield && !isEclipse) score = -50; 
-                else score = -500; 
-            }
+            if (hasShield && !isEclipse) score = -50; 
+            else score = -500; 
             }
             else if (dist === 2) {
             const risk = isBossCorner ? -10 : -30;
@@ -256,7 +246,7 @@
             return results;
         },
 
-        getBestMoveTarget: (currentPos, cardType, board, bossPos, allyPositions, unlockedCount, hasShield) => {
+        getBestMoveTarget: (currentPos, cardType, board, bossPos, allyPositions) => {
             const [r, c] = currentPos;
             const candidates = [];
             
@@ -285,15 +275,7 @@
 
             const distToBoss = Math.abs(tr - bossPos[0]) + Math.abs(tc - bossPos[1]);
             if (distToBoss === 0) score -= 1000;
-            else if (distToBoss === 1) {
-                if (unlockedCount >= 2) {
-                    // 殘局移動邏輯
-                    if (hasShield) score += 50; // 有盾不怕
-                    else score -= 50; // 沒盾輕微怕 (-50 比 -200 勇敢很多)
-                } else {
-                    score -= 200; // 正常恐懼
-                }
-            }
+            else if (distToBoss === 1) score -= 200;
             else if (distToBoss === 2) score -= 20;
             else score += 50;
 
@@ -320,7 +302,7 @@
             return bestTarget;
         },
 
-        simulateSequence: (player, sequence, board, players, bossPos, wardPos, unlockedCount) => {
+        simulateSequence: (player, sequence, board, players, bossPos, wardPos) => {
             let pState = { ...player, pos: [...player.pos] };
             let score = 0;
             
@@ -376,8 +358,7 @@
                 }
             } else if (type.includes('move')) {
                 const allies = Object.values(players).filter(pl => pl.id !== 'boss' && pl.id !== player.id).map(pl => pl.pos);
-                // 傳遞 unlockedCount 和 isShielded 給移動邏輯
-                const newPos = AI_BRAIN.getBestMoveTarget(pState.pos, type, board, bossPos, allies, unlockedCount, pState.isShielded);
+                const newPos = AI_BRAIN.getBestMoveTarget(pState.pos, type, board, bossPos, allies);
                 
                 if (newPos[0] === pState.pos[0] && newPos[1] === pState.pos[1]) {
                 score -= 20; 
@@ -387,8 +368,7 @@
                 }
             }
 
-            // 傳遞 unlockedCount 給威脅評估
-            const threat = AI_BRAIN.getThreatScore(pState.pos, bossPos, pState.isShielded, isEclipse, unlockedCount);
+            const threat = AI_BRAIN.getThreatScore(pState.pos, bossPos, pState.isShielded, isEclipse);
             score += threat;
             
             const endCell = board[pState.pos[0]][pState.pos[1]];
@@ -627,7 +607,7 @@
                 let score = 0;
                 if (isWard) score -= 100;
                 
-                score += AI_BRAIN.getThreatScore([r,c], currentPlayers.boss.pos, false, false, 0); // 復活時不考慮殘局邏輯，保持安全
+                score += AI_BRAIN.getThreatScore([r,c], currentPlayers.boss.pos, false, false);
 
                 Object.values(currentPlayers).forEach(p => {
                 if (p.type === 'ai' && !p.isDead && p.id !== currentPlayerId) {
@@ -643,8 +623,7 @@
             return candidates.length > 0 ? candidates[0].pos : [0,0];
         };
 
-        // 接收 unlockedCount
-        const planTeamStrategy = (currentPlayers, currentBoard, currentWard, unlockedCount) => {
+        const planTeamStrategy = (currentPlayers, currentBoard, currentWard) => {
             const bossPos = currentPlayers.boss.pos;
             const teamOrders = [
             ['red', 'yellow', 'green'], ['red', 'green', 'yellow'],
@@ -673,8 +652,7 @@
                 let bestPermResult = null;
 
                 handPerms.forEach(seq => {
-                    // 傳遞 unlockedCount 到模擬器
-                    const result = AI_BRAIN.simulateSequence(p, seq, simBoard, simPlayers, bossPos, currentWard, unlockedCount);
+                    const result = AI_BRAIN.simulateSequence(p, seq, simBoard, simPlayers, bossPos, currentWard);
                     if (result.score > bestPermScore) {
                     bestPermScore = result.score;
                     bestPermResult = result;
@@ -697,8 +675,7 @@
             return bestPlan;
         };
 
-        // 接收 unlockedCount
-        const startNewRound = async (currentPlayers, currentWard, currentBoard, unlockedCount) => {
+        const startNewRound = async (currentPlayers, currentWard, currentBoard) => {
             const p = JSON.parse(JSON.stringify(currentPlayers));
             
             Object.values(p).forEach(player => {
@@ -731,8 +708,7 @@
             });
 
             addLog(`🧠 AI Thinking...`);
-            // 傳遞 unlockedCount
-            const bestPlan = planTeamStrategy(p, currentBoard, currentWard, unlockedCount);
+            const bestPlan = planTeamStrategy(p, currentBoard, currentWard);
             
             const newArray = Array(12).fill(null);
             for (let moveIdx = 0; moveIdx < 3; moveIdx++) {
@@ -872,8 +848,7 @@
             } 
             else if (effectiveType.includes('move')) {
                 const allies = Object.values(curPlayers).filter(pl => pl.id !== 'boss' && pl.id !== p.id && !pl.isDead).map(pl => pl.pos);
-                // 移動階段不使用 unlockedCount，保持純移動邏輯
-                targetPos = AI_BRAIN.getBestMoveTarget(p.pos, effectiveType, curBoard, curPlayers.boss.pos, allies, 0, false);
+                targetPos = AI_BRAIN.getBestMoveTarget(p.pos, effectiveType, curBoard, curPlayers.boss.pos, allies);
             }
 
             let visualType = effectiveType;
@@ -1082,8 +1057,7 @@
             } else { 
                 setDoomCounter(r => r - 1); 
                 setGameTurn(t => t + 1); 
-                // 傳遞 curUnlocked
-                startNewRound(curPlayers, WARD_PATH[nextIdx], curBoard, curUnlocked); 
+                startNewRound(curPlayers, WARD_PATH[nextIdx], curBoard); 
             }
         };
 
@@ -1121,8 +1095,7 @@
             else nextPlayers[id].pos = [1, 1];
             });
             setPlayers(nextPlayers);
-            // 初始 unlockedCount 為 0
-            startNewRound(nextPlayers, [0, 1], newBoard, 0);
+            startNewRound(nextPlayers, [0, 1], newBoard);
         }, []);
 
         const finalizePlanning = () => { const bossRequired = players.boss.isRecovering ? 0 : 3; const bossInArray = actionArray.filter(a => a?.playerId === 'boss' && a?.card).length; if (bossInArray < bossRequired) return; setActiveSelection(null); setGamePhase('resolving'); resolveActions(actionArray); };
@@ -1402,4 +1375,3 @@
     </script>
 </body>
 </html>
-
