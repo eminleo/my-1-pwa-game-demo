@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo v5.21</title>
+    <title>Demo v5.20classic</title>
 
     <!-- [PWA 設定] -->
     <link rel="manifest" href="./manifest.json">
@@ -56,7 +56,7 @@
             Target: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
             X: "M18 6L6 18 M6 6l12 12",
             ShieldCheck: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M9 12l2 2 4-4",
-            List: "M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 12h.01 M3 18h.01",
+            List: "M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01",
             Key: "M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4",
             Skull: "M7 21a2 2 0 0 1-2-2V9a7 7 0 0 1 14 0v10a2 2 0 0 1-2 2 M9 13a1 1 0 1 1-2 0 M17 13a1 1 0 1 1-2 0",
             ArrowUpDown: "M12 3v18 M16 7l-4-4-4 4 M8 17l4 4 4-4",
@@ -873,18 +873,16 @@
                         
                         if (curBoard[p.pos[0]][p.pos[1]].dice === 0) {
                         curUnlocked++;
+                        logDetail = `🔓 Unlocked!`;
                         
+                        // [修改 2] 立即判定勝利
                         if (curUnlocked >= 3) {
-                            logDetail = `🔓 Unlocked! (3/3)`;
-                            addLog(`${logPrefix} ${playerIcon} : ${logDetail}`);
-                            setUnlockedCount(curUnlocked);
                             setWinner('Survivors');
-                            setPlayers({ ...curPlayers }); 
-                            setBoard([...curBoard]); 
-                            return; 
+                            setUnlockedCount(curUnlocked);
+                            setBoard([...curBoard]);
+                            return; // 立即結束
                         }
 
-                        logDetail = `🔓 Unlocked!`;
                         if (curBoard[p.pos[0]][p.pos[1]].hourglass) {
                             addLog("⏳ Time Reversed! (Round +1)");
                             curBoard.forEach(row => row.forEach(cell => { if (cell.type === FIELD_TYPES.EYE) cell.type = FIELD_TYPES.BLANK; }));
@@ -1129,13 +1127,18 @@
         useEffect(() => {
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('./sw.js')
-                        .then(registration => {
-                            console.log('ServiceWorker registration successful:', registration.scope);
-                        })
-                        .catch(err => {
-                            console.log('ServiceWorker registration failed:', err);
-                        });
+                    // Try catch to prevent error in preview if file missing
+                    try {
+                        navigator.serviceWorker.register('./sw.js')
+                            .then(registration => {
+                                console.log('ServiceWorker registration successful:', registration.scope);
+                            })
+                            .catch(err => {
+                                console.log('ServiceWorker registration failed (Preview mode?):', err);
+                            });
+                    } catch (e) {
+                         console.log('ServiceWorker skipped');
+                    }
                 });
             }
 
@@ -1194,11 +1197,12 @@
                                     `bg-[${THEME_COLORS.YELLOW}]/40`
                                     ) : ''}`}>
                             
+                            {/* [修改 1] 攻擊波紋：改成白色，並增加多個圈圈產生延遲效果 */}
                             {flashCell?.pos[0] === r && flashCell?.pos[1] === c && flashCell.type === 'damage' && (
                                 <>
-                                <div className="absolute inset-0 rounded-full border border-[#6a0dad] animate-ripple z-50"></div>
-                                <div className="absolute inset-0 rounded-full border border-[#6a0dad] animate-ripple z-50" style={{animationDelay: '0.15s'}}></div>
-                                <div className="absolute inset-0 rounded-full border border-[#6a0dad] animate-ripple z-50" style={{animationDelay: '0.3s'}}></div>
+                                    <div className="absolute inset-0 rounded-full border-2 border-white animate-ripple z-50"></div>
+                                    <div className="absolute inset-0 rounded-full border-2 border-white animate-ripple z-50" style={{animationDelay: '0.15s'}}></div>
+                                    <div className="absolute inset-0 rounded-full border-2 border-white animate-ripple z-50" style={{animationDelay: '0.3s'}}></div>
                                 </>
                             )}
 
