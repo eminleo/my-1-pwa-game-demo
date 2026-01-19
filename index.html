@@ -3,25 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo classic v5.23</title>
+    <title>Demo classic v5.24</title>
 
-    <!-- [PWA 設定] -->
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon.png">
     <meta name="theme-color" content="#000000">
     
-    <!-- 1. 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 2. 載入 React 和 ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
     
-    <!-- 3. 載入 Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
-        /* iOS Safari 特殊優化 */
         body {
             -webkit-touch-callout: none;
             -webkit-user-select: none;
@@ -37,7 +32,6 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- 內嵌圖標系統 ---
         const ICON_PATHS = {
             Shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
             Swords: "M14.5 17.5 L3 6 V3 H6 L17.5 14.5 Z M13 19 L19 13 M16 16 L20 20 M19 21 L21 19 M6.5 14.5 L18 3 H21 V6 L9.5 17.5 Z M5 13 L11 19 M8 16 L4 20 M3 19 L5 21",
@@ -214,7 +208,6 @@
             score = -2000; 
             }
             else if (dist === 1) {
-            // [修正] 距離 1 時盾牌沒用，因為 Boss 移動後回合結束盾就沒了，所以移除 hasShield 的加分
             score = -500; 
             }
             else if (dist === 2) {
@@ -353,9 +346,8 @@
                 } else {
                 pState.isShielded = true;
                 const dist = Math.abs(pState.pos[0] - bossPos[0]) + Math.abs(pState.pos[1] - bossPos[1]);
-                // [修正] 只有當 Boss 已經在同一格 (距離 0) 時開盾才有意義
                 if (dist === 0) score += 100; 
-                else score -= 50; // 其他距離開盾都是浪費
+                else score -= 50; 
                 }
             } else if (type.includes('move')) {
                 const allies = Object.values(players).filter(pl => pl.id !== 'boss' && pl.id !== player.id).map(pl => pl.pos);
@@ -814,7 +806,6 @@
                     if (r > 0) candidates.push([r - 1, c]);
                     if (r < 2) candidates.push([r + 1, c]);
                     
-                    // [修正] 如果唯一的移動選擇是 Boss 的位置，則強制改為解鎖（即原地不動）
                     const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === br && cc === bc);
                     
                     if (onlyPathIsBoss) effectiveType = 'unlock';
@@ -830,7 +821,6 @@
                     if (c > 0) candidates.push([r, c - 1]);
                     if (c < 2) candidates.push([r, c + 1]);
                     
-                    // [修正] 如果唯一的移動選擇是 Boss 的位置，則強制改為解鎖（即原地不動）
                     const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === br && cc === bc);
                     
                     if (onlyPathIsBoss) effectiveType = 'unlock';
@@ -902,12 +892,11 @@
                         curUnlocked++;
                         logDetail = `🔓 Unlocked!`;
                         
-                        // [修正] 立即判定勝利
                         if (curUnlocked >= 3) {
                             setWinner('Survivors');
                             setUnlockedCount(curUnlocked);
                             setBoard([...curBoard]);
-                            return; // 立即結束
+                            return; 
                         }
 
                         if (curBoard[p.pos[0]][p.pos[1]].hourglass) {
@@ -1154,7 +1143,6 @@
         useEffect(() => {
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
-                    // Try catch to prevent error in preview if file missing
                     try {
                         navigator.serviceWorker.register('./sw.js')
                             .then(registration => {
@@ -1224,7 +1212,6 @@
                                     `bg-[${THEME_COLORS.YELLOW}]/40`
                                     ) : ''}`}>
                             
-                            {/* [修改 1] 攻擊波紋：改成白色，並增加多個圈圈產生延遲效果 */}
                             {flashCell?.pos[0] === r && flashCell?.pos[1] === c && flashCell.type === 'damage' && (
                                 <>
                                     <div className="absolute inset-0 rounded-full border-2 border-white animate-ripple z-50"></div>
@@ -1373,13 +1360,11 @@
                 50% { border-color: #ffffff; box-shadow: 0 0 10px #ffffff; } 
                 }
                 
-                /* 邪惡眨眼動畫 */
                 @keyframes eye-blink {
                 0%, 48%, 52%, 100% { transform: scaleY(1); }
                 50% { transform: scaleY(0.1); }
                 }
 
-                /* 傷害擴散波紋動畫 */
                 @keyframes ripple-effect {
                 0% { transform: scale(0.5); opacity: 1; border-width: 2px; }
                 100% { transform: scale(2.0); opacity: 0; border-width: 0px; }
