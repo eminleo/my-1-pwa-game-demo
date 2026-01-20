@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo classic v5.24</title>
+    <title>Demo v5.25</title>
 
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon.png">
@@ -798,7 +798,24 @@
                 else effectiveType = 'void';
             } else if (effectiveType === 'unlock_move_ud') {
                 if (isLocked) {
-                    effectiveType = 'unlock';
+                    const dist = Math.abs(p.pos[0] - curPlayers.boss.pos[0]) + Math.abs(p.pos[1] - curPlayers.boss.pos[1]);
+                    let canFlee = false;
+                    
+                    if (dist <= 1) {
+                         const [r, c] = p.pos;
+                         const [br, bc] = curPlayers.boss.pos;
+                         
+                         const candidates = [];
+                         if (r > 0) candidates.push([r - 1, c]);
+                         if (r < 2) candidates.push([r + 1, c]);
+                         
+                         if (candidates.some(([cr, cc]) => cr !== br || cc !== bc)) {
+                             canFlee = true;
+                         }
+                    }
+
+                    if (canFlee) effectiveType = 'move_ud';
+                    else effectiveType = 'unlock';
                 } else {
                     const [r, c] = p.pos;
                     const [br, bc] = curPlayers.boss.pos;
@@ -813,7 +830,24 @@
                 }
             } else if (effectiveType === 'unlock_move_lr') {
                 if (isLocked) {
-                    effectiveType = 'unlock';
+                    const dist = Math.abs(p.pos[0] - curPlayers.boss.pos[0]) + Math.abs(p.pos[1] - curPlayers.boss.pos[1]);
+                    let canFlee = false;
+                    
+                    if (dist <= 1) {
+                         const [r, c] = p.pos;
+                         const [br, bc] = curPlayers.boss.pos;
+                         
+                         const candidates = [];
+                         if (c > 0) candidates.push([r, c - 1]);
+                         if (c < 2) candidates.push([r, c + 1]);
+                         
+                         if (candidates.some(([cr, cc]) => cr !== br || cc !== bc)) {
+                             canFlee = true;
+                         }
+                    }
+
+                    if (canFlee) effectiveType = 'move_lr';
+                    else effectiveType = 'unlock';
                 } else {
                     const [r, c] = p.pos;
                     const [br, bc] = curPlayers.boss.pos;
