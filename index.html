@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo v5.37</title>
+    <title>Demo v5.39</title>
 
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon.png">
@@ -431,7 +431,7 @@
                 pState.isShielded = true;
                 const dist = Math.abs(pState.pos[0] - bossPos[0]) + Math.abs(pState.pos[1] - bossPos[1]);
                 if (dist === 0) score += 100; 
-                else score -= 50; 
+                else score += 1; // [修改] 盾牌加分，鼓勵開盾
                 }
             } else if (type.includes('move')) {
                 const allies = Object.values(players).filter(pl => pl.id !== 'boss' && pl.id !== player.id).map(pl => pl.pos);
@@ -455,19 +455,12 @@
                 if (dist >= 3) score += 100; 
             }
 
-            // [修改] 每一張牌模擬結束後，強制移除盾牌效果 (盾牌有效期錯覺修復)
             pState.isShielded = false;
             }
 
             return { score, finalPos: pState.pos, sequence, events };
         }
         };
-
-        // ... (The rest of the code is unchanged) ...
-        // ... (ActionIcons, TokenLayer, MiniStatus, CinematicAction, App, useEffect, etc.) ...
-        
-        // This is just a placeholder to signal the update.
-        // The core changes are in the AI_BRAIN.simulateSequence and resolveActions functions above.
 
         const ActionIcons = ({ type, size = 12, dark = false, isFlying = false }) => {
         const icons = [];
@@ -1182,8 +1175,6 @@
                     p.pos = targetPos;
                     logDetail = `Moved [${dirText}] from ${startPosStr} to ${endPosStr}`;
                 }
-                
-                currentExecMap[p.id] = effectiveType;
             } else {
                 logDetail = "Action Voided";
             }
@@ -1258,7 +1249,7 @@
             const nextPlayers = { ...players };
             ['red', 'yellow', 'green', 'boss'].forEach(id => {
             nextPlayers[id].deck = shuffle([...(id === 'boss' ? INITIAL_BOSS_DECK : INITIAL_PLAYER_DECK)]);
-            if (id !== 'boss') nextPlayers[id].pos = findBestSpawnPos(newBoard, nextPlayers, [0, 1], id, true); // [修改] 傳入 true
+            if (id !== 'boss') nextPlayers[id].pos = findBestSpawnPos(newBoard, nextPlayers, [0, 1], id, true);
             else nextPlayers[id].pos = [1, 1];
             });
             setPlayers(nextPlayers);
