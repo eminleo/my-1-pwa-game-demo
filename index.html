@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo v5.25</title>
+    <title>Demo v5.37</title>
 
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon.png">
@@ -295,20 +295,39 @@
             return bestTarget;
         },
 
-        simulateSequence: (player, sequence, board, players, bossPos, wardPos) => {
+        simulateSequence: (player, sequence, board, players, bossPos, wardPos, unlockedCount) => {
             let pState = { ...player, pos: [...player.pos] };
             let score = 0;
+            let simUnlocked = unlockedCount; 
+            let simLockHealth = {}; 
+            let lastRealType = 'void'; 
+            let events = []; 
             
             for (let i = 0; i < sequence.length; i++) {
             const card = sequence[i];
             let type = card.type;
             
-            if (type === 'repeat') type = i > 0 ? sequence[i-1].type : 'void';
-            if (type === 'repeat') type = 'void'; 
+            if (type === 'repeat') {
+                type = lastRealType;
+            } else {
+                lastRealType = type;
+            }
 
-            const cell = board[pState.pos[0]][pState.pos[1]];
-            const isLock = cell.type === FIELD_TYPES.LOCK && cell.dice > 0;
-            const isWard = pState.pos[0] === wardPos[0] && pState.pos[1] === wardPos[1];
+            const [r, c] = pState.pos;
+            const cell = board[r][c];
+            const cellKey = `${r}-${c}`;
+
+            let currentDice = -1;
+            if (cell.type === FIELD_TYPES.LOCK) {
+                if (simLockHealth[cellKey] !== undefined) {
+                    currentDice = simLockHealth[cellKey];
+                } else {
+                    currentDice = cell.dice;
+                }
+            }
+
+            const isLock = cell.type === FIELD_TYPES.LOCK && currentDice > 0;
+            const isWard = r === wardPos[0] && c === wardPos[1];
             const isEye = cell.type === FIELD_TYPES.EYE;
             const isEclipse = isWard && isEye; 
 
@@ -317,17 +336,82 @@
                 else if (pState.hp < 2 && !isEclipse) type = 'heal';
                 else type = 'void'; 
             } else if (type === 'unlock_move_ud') {
-                if (isLock) type = 'unlock'; 
-                else type = 'move_ud';
+                if (isLock) {
+                    const distToBoss = Math.abs(r - bossPos[0]) + Math.abs(c - bossPos[1]);
+                    let canFlee = false;
+                    
+                    if (distToBoss <= 1) {
+                         const candidates = [];
+                         if (r > 0) candidates.push([r - 1, c]);
+                         if (r < 2) candidates.push([r + 1, c]);
+                         
+                         if (candidates.some(([cr, cc]) => cr !== bossPos[0] || cc !== bossPos[1])) {
+                             canFlee = true;
+                         }
+                    }
+
+                    if (canFlee) type = 'move_ud';
+                    else type = 'unlock';
+                } else {
+                    const candidates = [];
+                    if (r > 0) candidates.push([r - 1, c]);
+                    if (r < 2) candidates.push([r + 1, c]);
+                    
+                    const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === bossPos[0] && cc === bossPos[1]);
+                    
+                    if (onlyPathIsBoss) type = 'unlock'; 
+                    else type = 'move_ud';
+                }
             } else if (type === 'unlock_move_lr') {
-                if (isLock) type = 'unlock';
-                else type = 'move_lr';
+                if (isLock) {
+                    const distToBoss = Math.abs(r - bossPos[0]) + Math.abs(c - bossPos[1]);
+                    let canFlee = false;
+                    
+                    if (distToBoss <= 1) {
+                         const candidates = [];
+                         if (c > 0) candidates.push([r, c - 1]);
+                         if (c < 2) candidates.push([r, c + 1]);
+                         
+                         if (candidates.some(([cr, cc]) => cr !== bossPos[0] || cc !== bossPos[1])) {
+                             canFlee = true;
+                         }
+                    }
+
+                    if (canFlee) type = 'move_lr';
+                    else type = 'unlock';
+                } else {
+                    const candidates = [];
+                    if (c > 0) candidates.push([r, c - 1]);
+                    if (c < 2) candidates.push([r, c + 1]);
+                    
+                    const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === bossPos[0] && cc === bossPos[1]);
+                    
+                    if (onlyPathIsBoss) type = 'unlock'; 
+                    else type = 'move_lr';
+                }
             }
 
             if (type.includes('unlock')) {
                 if (isLock) {
                 score += 150; 
-                if (cell.dice === 1) score += 50; 
+                
+                currentDice--;
+                simLockHealth[cellKey] = currentDice;
+                
+                events.push({ type: 'damage', pos: [r, c] });
+
+                if (currentDice > 0) {
+                    score += (7 - currentDice) * 100;
+                }
+
+                if (currentDice === 0) {
+                    simUnlocked++;
+                    events.push({ type: 'unlock_complete' });
+                    if (simUnlocked >= 3) {
+                        score += 5000;
+                    }
+                }
+
                 } else {
                 score -= 10; 
                 }
@@ -370,11 +454,20 @@
                 const dist = Math.abs(pState.pos[0] - bossPos[0]) + Math.abs(pState.pos[1] - bossPos[1]);
                 if (dist >= 3) score += 100; 
             }
+
+            // [修改] 每一張牌模擬結束後，強制移除盾牌效果 (盾牌有效期錯覺修復)
+            pState.isShielded = false;
             }
 
-            return { score, finalPos: pState.pos, sequence };
+            return { score, finalPos: pState.pos, sequence, events };
         }
         };
+
+        // ... (The rest of the code is unchanged) ...
+        // ... (ActionIcons, TokenLayer, MiniStatus, CinematicAction, App, useEffect, etc.) ...
+        
+        // This is just a placeholder to signal the update.
+        // The core changes are in the AI_BRAIN.simulateSequence and resolveActions functions above.
 
         const ActionIcons = ({ type, size = 12, dark = false, isFlying = false }) => {
         const icons = [];
@@ -589,17 +682,23 @@
         
         const addLog = (msg) => setLogs(prev => [String(msg), ...prev].slice(0, 50));
 
-        const findBestSpawnPos = (currentBoard, currentPlayers, currentWard, currentPlayerId) => {
+        const findBestSpawnPos = (currentBoard, currentPlayers, currentWard, currentPlayerId, isGameStart = false) => {
             const candidates = [];
             currentBoard.forEach((row, r) => row.forEach((cell, c) => {
             const isBossPos = r === currentPlayers.boss.pos[0] && c === currentPlayers.boss.pos[1];
             const isWard = r === currentWard[0] && c === currentWard[1];
+            const isEye = cell.type === FIELD_TYPES.EYE;
             const occupied = Object.values(currentPlayers).some(p => p.pos[0] === r && p.pos[1] === c && !p.isDead && !p.isRecovering && p.id !== currentPlayerId);
             
             if ((!cell.dice || cell.dice === 0) && !isBossPos && !occupied) {
                 let score = 0;
                 if (isWard) score -= 100;
                 
+                if (isGameStart) {
+                    if (isWard) score -= 2000;
+                    if (isEye) score -= 2000;
+                }
+
                 score += AI_BRAIN.getThreatScore([r,c], currentPlayers.boss.pos, false, false);
 
                 Object.values(currentPlayers).forEach(p => {
@@ -616,7 +715,7 @@
             return candidates.length > 0 ? candidates[0].pos : [0,0];
         };
 
-        const planTeamStrategy = (currentPlayers, currentBoard, currentWard) => {
+        const planTeamStrategy = (currentPlayers, currentBoard, currentWard, currentUnlockedCount) => {
             const bossPos = currentPlayers.boss.pos;
             const teamOrders = [
             ['red', 'yellow', 'green'], ['red', 'green', 'yellow'],
@@ -634,7 +733,9 @@
             let orderPlan = {};
             
             let simPlayers = JSON.parse(JSON.stringify(currentPlayers));
-            
+            let simBoard = JSON.parse(JSON.stringify(currentBoard)); 
+            let simUnlocked = currentUnlockedCount;
+
             order.forEach(pid => {
                 const p = simPlayers[pid];
                 if (p.isDead || p.isRecovering) return; 
@@ -645,7 +746,7 @@
                 let bestPermResult = null;
 
                 handPerms.forEach(seq => {
-                    const result = AI_BRAIN.simulateSequence(p, seq, simBoard, simPlayers, bossPos, currentWard);
+                    const result = AI_BRAIN.simulateSequence(p, seq, simBoard, simPlayers, bossPos, currentWard, simUnlocked);
                     if (result.score > bestPermScore) {
                     bestPermScore = result.score;
                     bestPermResult = result;
@@ -655,7 +756,21 @@
                 if (bestPermResult) {
                 orderScore += bestPermResult.score;
                 orderPlan[pid] = bestPermResult.sequence;
-                p.pos = bestPermResult.finalPos; 
+                
+                p.pos = bestPermResult.finalPos;
+
+                if (bestPermResult.events) {
+                    bestPermResult.events.forEach(event => {
+                        if (event.type === 'damage') {
+                            const [er, ec] = event.pos;
+                            if (simBoard[er][ec].dice > 0) {
+                                simBoard[er][ec].dice--;
+                            }
+                        } else if (event.type === 'unlock_complete') {
+                            simUnlocked++;
+                        }
+                    });
+                }
                 }
             });
 
@@ -668,7 +783,7 @@
             return bestPlan;
         };
 
-        const startNewRound = async (currentPlayers, currentWard, currentBoard) => {
+        const startNewRound = async (currentPlayers, currentWard, currentBoard, currentUnlocked) => {
             const p = JSON.parse(JSON.stringify(currentPlayers));
             
             Object.values(p).forEach(player => {
@@ -701,7 +816,7 @@
             });
 
             addLog(`🧠 AI Thinking...`);
-            const bestPlan = planTeamStrategy(p, currentBoard, currentWard);
+            const bestPlan = planTeamStrategy(p, currentBoard, currentWard, currentUnlocked);
             
             const newArray = Array(12).fill(null);
             for (let moveIdx = 0; moveIdx < 3; moveIdx++) {
@@ -767,7 +882,7 @@
             let curBoard = JSON.parse(JSON.stringify(board));
             let curUnlocked = unlockedCount;
             let curWard = [...wardPos];
-            let currentExecMap = { boss: null, red: null, yellow: null, green: null };
+            let lastCardType = { boss: null, red: null, yellow: null, green: null }; 
             let queue = [...finalArray];
             
             let currentDoomCount = doomCounter;
@@ -787,7 +902,11 @@
             if (p.isDead || p.hp <= 0) { await new Promise(r => setTimeout(r, 200)); continue; }
 
             let effectiveType = action.card.type;
-            if (effectiveType === 'repeat') effectiveType = currentExecMap[p.id] || 'void';
+            if (effectiveType === 'repeat') {
+                effectiveType = lastCardType[p.id] || 'void';
+            } else {
+                lastCardType[p.id] = effectiveType;
+            }
             
             const currentCell = curBoard[p.pos[0]][p.pos[1]];
             const isLocked = currentCell.type === 'lock' && currentCell.dice > 0;
@@ -1105,7 +1224,7 @@
             } else { 
                 setDoomCounter(r => r - 1); 
                 setGameTurn(t => t + 1); 
-                startNewRound(curPlayers, WARD_PATH[nextIdx], curBoard); 
+                startNewRound(curPlayers, WARD_PATH[nextIdx], curBoard, curUnlocked); 
             }
         };
 
@@ -1119,7 +1238,7 @@
             newBoard[i] = [];
             for(let j=0; j<3; j++) {
                 const type = fields[i * 3 + j];
-                const dice = type === FIELD_TYPES.LOCK ? dicePool[dicePoolIndex++] : null;
+                const dice = type === FIELD_TYPES.LOCK ? Math.floor(Math.random() * 4) + 4 : null;
                 newBoard[i][j] = { type, dice, id: `cell-${i}-${j}`, hourglass: false };
             }
             }
@@ -1139,11 +1258,11 @@
             const nextPlayers = { ...players };
             ['red', 'yellow', 'green', 'boss'].forEach(id => {
             nextPlayers[id].deck = shuffle([...(id === 'boss' ? INITIAL_BOSS_DECK : INITIAL_PLAYER_DECK)]);
-            if (id !== 'boss') nextPlayers[id].pos = findBestSpawnPos(newBoard, nextPlayers, [0, 1], id);
+            if (id !== 'boss') nextPlayers[id].pos = findBestSpawnPos(newBoard, nextPlayers, [0, 1], id, true); // [修改] 傳入 true
             else nextPlayers[id].pos = [1, 1];
             });
             setPlayers(nextPlayers);
-            startNewRound(nextPlayers, [0, 1], newBoard);
+            startNewRound(nextPlayers, [0, 1], newBoard, 0);
         }, []);
 
         const finalizePlanning = () => { const bossRequired = players.boss.isRecovering ? 0 : 3; const bossInArray = actionArray.filter(a => a?.playerId === 'boss' && a?.card).length; if (bossInArray < bossRequired) return; setActiveSelection(null); setGamePhase('resolving'); resolveActions(actionArray); };
@@ -1390,8 +1509,8 @@
                 100% { left: var(--end-x); top: var(--end-y); transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
                 }
                 @keyframes border-flash { 
-                0%, 100% { border-color: #6a0dad; box-shadow: 0 0 5px #6a0dad; } 
-                50% { border-color: #ffffff; box-shadow: 0 0 10px #ffffff; } 
+                0%, 100% { border-color: #6a0dad; box-shadow: 0 0 2px #6a0dad; } 
+                50% { border-color: #ffffff; box-shadow: 0 0 4px #ffffff; } 
                 }
                 
                 @keyframes eye-blink {
