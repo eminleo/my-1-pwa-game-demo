@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo v5.40</title>
+    <title>Demo v5.46</title>
 
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon.png">
@@ -37,7 +37,7 @@
             Swords: "M14.5 17.5 L3 6 V3 H6 L17.5 14.5 Z M13 19 L19 13 M16 16 L20 20 M19 21 L21 19 M6.5 14.5 L18 3 H21 V6 L9.5 17.5 Z M5 13 L11 19 M8 16 L4 20 M3 19 L5 21",
             SwordFull: "M14.5 17.5 L3 6 V3 H6 L17.5 14.5 M13 19 L19 13 M16 16 L20 20 M19 21 L21 19", 
             Move: "M5 9l-3 3 3 3 M9 5l3-3 3 3 M19 9l3 3-3 3 M15 19l-3 3-3-3 M2 12h20 M12 2v20",
-            Lock: "M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z M7 11V7a5 5 0 0 1 10 0v4 M12 16v3",
+            Lock: "M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 10 0v4 M12 16v3",
             Eye: "M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
             RotateCcw: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5",
             Heart: "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z",
@@ -299,10 +299,13 @@
             let pState = { ...player, pos: [...player.pos] };
             let score = 0;
             let simUnlocked = unlockedCount; 
-            let simLockHealth = {}; // [Clean] Used correctly
+            let simLockHealth = {}; 
             let lastRealType = 'void'; 
             let events = []; 
             
+            // [新增] 模擬 Boss 位置，實現「預判追擊」
+            let simBossPos = [...bossPos];
+
             for (let i = 0; i < sequence.length; i++) {
             const card = sequence[i];
             let type = card.type;
@@ -337,7 +340,7 @@
                 else type = 'void'; 
             } else if (type === 'unlock_move_ud') {
                 if (isLock) {
-                    const distToBoss = Math.abs(r - bossPos[0]) + Math.abs(c - bossPos[1]);
+                    const distToBoss = Math.abs(r - simBossPos[0]) + Math.abs(c - simBossPos[1]);
                     let canFlee = false;
                     
                     if (distToBoss <= 1) {
@@ -345,7 +348,7 @@
                          if (r > 0) candidates.push([r - 1, c]);
                          if (r < 2) candidates.push([r + 1, c]);
                          
-                         if (candidates.some(([cr, cc]) => cr !== bossPos[0] || cc !== bossPos[1])) {
+                         if (candidates.some(([cr, cc]) => cr !== simBossPos[0] || cc !== simBossPos[1])) {
                              canFlee = true;
                          }
                     }
@@ -357,14 +360,14 @@
                     if (r > 0) candidates.push([r - 1, c]);
                     if (r < 2) candidates.push([r + 1, c]);
                     
-                    const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === bossPos[0] && cc === bossPos[1]);
+                    const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === simBossPos[0] && cc === simBossPos[1]);
                     
                     if (onlyPathIsBoss) type = 'unlock'; 
                     else type = 'move_ud';
                 }
             } else if (type === 'unlock_move_lr') {
                 if (isLock) {
-                    const distToBoss = Math.abs(r - bossPos[0]) + Math.abs(c - bossPos[1]);
+                    const distToBoss = Math.abs(r - simBossPos[0]) + Math.abs(c - simBossPos[1]);
                     let canFlee = false;
                     
                     if (distToBoss <= 1) {
@@ -372,7 +375,7 @@
                          if (c > 0) candidates.push([r, c - 1]);
                          if (c < 2) candidates.push([r, c + 1]);
                          
-                         if (candidates.some(([cr, cc]) => cr !== bossPos[0] || cc !== bossPos[1])) {
+                         if (candidates.some(([cr, cc]) => cr !== simBossPos[0] || cc !== simBossPos[1])) {
                              canFlee = true;
                          }
                     }
@@ -384,7 +387,7 @@
                     if (c > 0) candidates.push([r, c - 1]);
                     if (c < 2) candidates.push([r, c + 1]);
                     
-                    const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === bossPos[0] && cc === bossPos[1]);
+                    const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === simBossPos[0] && cc === simBossPos[1]);
                     
                     if (onlyPathIsBoss) type = 'unlock'; 
                     else type = 'move_lr';
@@ -429,13 +432,13 @@
                 score -= 50;
                 } else {
                 pState.isShielded = true;
-                const dist = Math.abs(pState.pos[0] - bossPos[0]) + Math.abs(pState.pos[1] - bossPos[1]);
+                const dist = Math.abs(pState.pos[0] - simBossPos[0]) + Math.abs(pState.pos[1] - simBossPos[1]);
                 if (dist === 0) score += 100; 
                 else score += 1; 
                 }
             } else if (type.includes('move')) {
                 const allies = Object.values(players).filter(pl => pl.id !== 'boss' && pl.id !== player.id).map(pl => pl.pos);
-                const newPos = AI_BRAIN.getBestMoveTarget(pState.pos, type, board, bossPos, allies);
+                const newPos = AI_BRAIN.getBestMoveTarget(pState.pos, type, board, simBossPos, allies); // 使用 simBossPos
                 
                 if (newPos[0] === pState.pos[0] && newPos[1] === pState.pos[1]) {
                 score -= 20; 
@@ -540,7 +543,7 @@
 
                 const isDamagedAi = p.type === 'ai' && p.hp === 1;
                 const backgroundStyle = isDamagedAi
-                ? { background: `linear-gradient(to bottom, transparent 50%, ${COLORS[p.color]} 50%)` }
+                ? { background: `linear-gradient(to bottom, transparent 50%, ${COLORS[p.color]} 50%)`, backgroundRepeat: 'no-repeat' }
                 : { backgroundColor: COLORS[p.color] };
 
                 return (
@@ -866,7 +869,7 @@
             }
 
             setCinematicEffect({ iconType, color: players[playerId].color, start: startPos, center: centerPos, end: endPos });
-            setTimeout(() => { setCinematicEffect(null); resolve(); }, 3000);
+            setTimeout(() => { setCinematicEffect(null); resolve(); }, 2000);
             });
         };
 
@@ -1175,8 +1178,6 @@
                     p.pos = targetPos;
                     logDetail = `Moved [${dirText}] from ${startPosStr} to ${endPosStr}`;
                 }
-                
-                // currentExecMap[p.id] = effectiveType; // [Clean] Removed
             } else {
                 logDetail = "Action Voided";
             }
@@ -1223,15 +1224,16 @@
 
         useEffect(() => {
             const fields = shuffle([...Array(3).fill(FIELD_TYPES.BLANK), FIELD_TYPES.EYE, ...Array(5).fill(FIELD_TYPES.LOCK)]);
-            const dicePool = shuffle([6, 6, 7, 7, 7]); 
-            let dicePoolIndex = 0;
+            const rawDicePool = [4, 4, 5, 5, 5, 5, 6, 6, 7];
+            const selectedDice = shuffle(rawDicePool).slice(0, 5);
+            let diceIndex = 0;
 
             const newBoard = [];
             for(let i=0; i<3; i++) {
             newBoard[i] = [];
             for(let j=0; j<3; j++) {
                 const type = fields[i * 3 + j];
-                const dice = type === FIELD_TYPES.LOCK ? Math.floor(Math.random() * 4) + 4 : null;
+                const dice = type === FIELD_TYPES.LOCK ? selectedDice[diceIndex++] : null;
                 newBoard[i][j] = { type, dice, id: `cell-${i}-${j}`, hourglass: false };
             }
             }
@@ -1516,7 +1518,7 @@
                 100% { transform: scale(2.0); opacity: 0; border-width: 0px; }
                 }
 
-                .animate-cinematic-fly { animation: fly 3s cubic-bezier(0.16, 1, 0.3, 1) forwards; position: fixed; }
+                .animate-cinematic-fly { animation: fly 2s cubic-bezier(0.25, 1, 0.3, 1) forwards; position: fixed; }
                 .animate-border-flash { animation: border-flash 3s infinite; }
                 .animate-blink { animation: eye-blink 12s infinite; }
                 .animate-ripple { animation: ripple-effect 0.5s ease-out forwards; }
