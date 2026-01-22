@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Demo v5.46</title>
+    <title>Demo v5.47</title>
 
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon.png">
@@ -295,7 +295,7 @@
             return bestTarget;
         },
 
-        simulateSequence: (player, sequence, board, players, bossPos, wardPos, unlockedCount) => {
+        simulateSequence: (player, sequence, board, players, bossPos, wardPos, unlockedCount, currentTurn) => {
             let pState = { ...player, pos: [...player.pos] };
             let score = 0;
             let simUnlocked = unlockedCount; 
@@ -303,7 +303,6 @@
             let lastRealType = 'void'; 
             let events = []; 
             
-            // [新增] 模擬 Boss 位置，實現「預判追擊」
             let simBossPos = [...bossPos];
 
             for (let i = 0; i < sequence.length; i++) {
@@ -396,7 +395,10 @@
 
             if (type.includes('unlock')) {
                 if (isLock) {
-                score += 150; 
+                // [R6 Fury Mode Logic]
+                // Base score increases significantly from Round 6 (gameTurn >= 6)
+                const baseScore = currentTurn >= 6 ? 1650 : 150;
+                score += baseScore; 
                 
                 currentDice--;
                 simLockHealth[cellKey] = currentDice;
@@ -438,7 +440,7 @@
                 }
             } else if (type.includes('move')) {
                 const allies = Object.values(players).filter(pl => pl.id !== 'boss' && pl.id !== player.id).map(pl => pl.pos);
-                const newPos = AI_BRAIN.getBestMoveTarget(pState.pos, type, board, simBossPos, allies); // 使用 simBossPos
+                const newPos = AI_BRAIN.getBestMoveTarget(pState.pos, type, board, simBossPos, allies); 
                 
                 if (newPos[0] === pState.pos[0] && newPos[1] === pState.pos[1]) {
                 score -= 20; 
@@ -711,7 +713,7 @@
             return candidates.length > 0 ? candidates[0].pos : [0,0];
         };
 
-        const planTeamStrategy = (currentPlayers, currentBoard, currentWard, currentUnlockedCount) => {
+        const planTeamStrategy = (currentPlayers, currentBoard, currentWard, currentUnlockedCount, currentTurn) => {
             const bossPos = currentPlayers.boss.pos;
             const teamOrders = [
             ['red', 'yellow', 'green'], ['red', 'green', 'yellow'],
@@ -742,7 +744,7 @@
                 let bestPermResult = null;
 
                 handPerms.forEach(seq => {
-                    const result = AI_BRAIN.simulateSequence(p, seq, simBoard, simPlayers, bossPos, currentWard, simUnlocked);
+                    const result = AI_BRAIN.simulateSequence(p, seq, simBoard, simPlayers, bossPos, currentWard, simUnlocked, currentTurn);
                     if (result.score > bestPermScore) {
                     bestPermScore = result.score;
                     bestPermResult = result;
@@ -779,7 +781,7 @@
             return bestPlan;
         };
 
-        const startNewRound = async (currentPlayers, currentWard, currentBoard, currentUnlocked) => {
+        const startNewRound = async (currentPlayers, currentWard, currentBoard, currentUnlocked, currentTurn) => {
             const p = JSON.parse(JSON.stringify(currentPlayers));
             
             Object.values(p).forEach(player => {
@@ -812,7 +814,7 @@
             });
 
             addLog(`🧠 AI Thinking...`);
-            const bestPlan = planTeamStrategy(p, currentBoard, currentWard, currentUnlocked);
+            const bestPlan = planTeamStrategy(p, currentBoard, currentWard, currentUnlocked, currentTurn);
             
             const newArray = Array(12).fill(null);
             for (let moveIdx = 0; moveIdx < 3; moveIdx++) {
@@ -1218,7 +1220,7 @@
             } else { 
                 setDoomCounter(r => r - 1); 
                 setGameTurn(t => t + 1); 
-                startNewRound(curPlayers, WARD_PATH[nextIdx], curBoard, curUnlocked); 
+                startNewRound(curPlayers, WARD_PATH[nextIdx], curBoard, curUnlocked, gameTurn + 1); // [Modification] Pass nextTurn
             }
         };
 
@@ -1257,7 +1259,7 @@
             else nextPlayers[id].pos = [1, 1];
             });
             setPlayers(nextPlayers);
-            startNewRound(nextPlayers, [0, 1], newBoard, 0);
+            startNewRound(nextPlayers, [0, 1], newBoard, 0, 1); // [Modification] Pass currentTurn=1
         }, []);
 
         const finalizePlanning = () => { const bossRequired = players.boss.isRecovering ? 0 : 3; const bossInArray = actionArray.filter(a => a?.playerId === 'boss' && a?.card).length; if (bossInArray < bossRequired) return; setActiveSelection(null); setGamePhase('resolving'); resolveActions(actionArray); };
