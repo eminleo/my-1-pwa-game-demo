@@ -1057,6 +1057,7 @@
                     if (canFlee && !isDesperate) effectiveType = 'move_ud';
                     else effectiveType = 'unlock';
                 } else {
+                    const [r, c] = p.pos; // [Fix] Added definition
                     const candidates = [];
                     if (r > 0) candidates.push([r - 1, c]);
                     if (r < 2) candidates.push([r + 1, c]);
@@ -1087,13 +1088,14 @@
                     if (canFlee && !isDesperate) effectiveType = 'move_lr';
                     else effectiveType = 'unlock';
                 } else {
+                    const [r, c] = p.pos; // [Fix] Added definition
                     const candidates = [];
                     if (c > 0) candidates.push([r, c - 1]);
                     if (c < 2) candidates.push([r, c + 1]);
                     
                     const onlyPathIsUser = candidates.length > 0 && candidates.every(([cr, cc]) => cr === curEntities.user.pos[0] && cc === curEntities.user.pos[1]);
                     
-                    if (onlyPathIsUser) effectiveType = 'unlock';
+                    if (onlyPathIsUser) type = 'unlock'; 
                     else effectiveType = 'move_lr';
                 }
             }
@@ -1311,6 +1313,7 @@
                 Object.values(curEntities).forEach(pl => pl.isShielded = false);
             }
 
+            // [Fix] 6. 更新前再檢查一次
             if (gameVersionRef.current !== currentRunVersion) return;
 
             setEntities({ ...curEntities }); setBoard([...curBoard]); setUnlockedCount(curUnlocked);
@@ -1351,6 +1354,7 @@
         };
 
         const finalizePlanning = () => { 
+            // [Fix] 防止連點
             if (gamePhase !== 'planning') return;
 
             const userRequired = entities.user.isRecovering ? 0 : 3; 
