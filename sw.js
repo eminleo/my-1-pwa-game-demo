@@ -1,6 +1,6 @@
-// [Version Bump] 升級為 v2，確保 v6.0 的 index.html 能被即時更新
+// [Version Bump] 升級為 v3-hotfix，強制重新快取修復後的 index.html
 const CACHE_PREFIX = 'tag-455667-chess-';
-const CACHE_VERSION = 'v2-renamed'; 
+const CACHE_VERSION = 'v3-hotfix'; 
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 // 核心資源：與 index.html 保持嚴格一致
@@ -23,7 +23,7 @@ const OPTIONAL_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] 安裝中... Tag 455667 Chess (v2)');
+  console.log('[Service Worker] 安裝中... Tag 455667 Chess (v3)');
   self.skipWaiting(); 
 
   event.waitUntil(
