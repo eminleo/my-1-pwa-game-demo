@@ -26,7 +26,6 @@
             touch-action: manipulation;
             background-color: #000000;
             overscroll-behavior-y: none; 
-            /* iPhone 安全區域適配 */
             padding-bottom: env(safe-area-inset-bottom);
         }
     </style>
@@ -37,8 +36,34 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback } = React;
 
-        // [New Name] Updated Save Key
-        const SAVE_KEY = "tag_455667_chess_save_v1";
+        const SAVE_KEY = "tag_455667_chess_save_v2_renamed";
+
+        // --- 🎨 顏色代碼 (Theme Colors) ---
+        const THEME_COLORS = {
+            PURPLE: '#6a0dad',      // User, 魔眼, 結界
+            RED: '#D72600',         // AI Red, 攻擊
+            YELLOW: '#ECD407',      // AI Yellow, 解鎖
+            GREEN: '#379711',       // AI Green, 治療
+            
+            DAMAGE: '#D72600',      // 紅色閃光
+            BLUE: '#0956BF',        // 護盾, 沙漏
+            UNLOCK: '#ECD407',      // 黃色閃光
+            HEAL: '#379711',        // 綠色閃光
+            GRAY: '#6b7280',        // 無效
+            
+            BROWN_DARK: '#3e2723',  // 邊框
+            BROWN_LIGHT: '#8d6e63', // 線條
+            PAPER_BEIGE: '#f5f5dc', // 紙張
+            BLACK: '#000000',       // 背景
+            GOLD: '#FFD700'         // 勝利
+        };
+
+        const COLORS = {
+            purple: THEME_COLORS.PURPLE, 
+            red: THEME_COLORS.RED,        
+            yellow: THEME_COLORS.YELLOW, 
+            green: THEME_COLORS.GREEN    
+        };
 
         const ICON_PATHS = {
             Shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
@@ -106,35 +131,8 @@
         const FIELD_TYPES = { BLANK: 'blank', EYE: 'eye', LOCK: 'lock' };
         const FLASH_DURATION = 500; 
 
-        const THEME_COLORS = {
-            RED: '#D72600',
-            BLUE: '#0956BF',
-            GREEN: '#379711',
-            YELLOW: '#ECD407',
-            PURPLE: '#6a0dad',
-            GOLD: '#FFD700',
-            WHITE: '#FFFFFF',
-            BLACK: '#000000',
-            STONE_300: '#d6d3d1', 
-            SLATE_400: '#94a3b8', 
-            GRAY_500: '#6b7280',  
-            AMBER_500: '#f59e0b', 
-            BROWN_DARK: '#3e2723',
-            BROWN_LIGHT: '#d7ccc8',
-            BROWN_MID: '#8d6e63',
-            BG_DARK: '#0c0a09',
-            BG_PANEL: '#1c1917',
-            PAPER_BEIGE: '#f5f5dc'
-        };
-
-        const COLORS = {
-            purple: THEME_COLORS.PURPLE, 
-            red: THEME_COLORS.RED,        
-            yellow: THEME_COLORS.YELLOW, 
-            green: THEME_COLORS.GREEN    
-        };
-
-        const INITIAL_BOSS_DECK = [
+        // [Renamed] User Deck (was Boss)
+        const INITIAL_USER_DECK = [
         { id: 'b1', name: 'Move U/D', type: 'move_ud', needChoice: true },
         { id: 'b2', name: 'Move U/D', type: 'move_ud', needChoice: true },
         { id: 'b3', name: 'Move L/R', type: 'move_lr', needChoice: true },
@@ -144,7 +142,8 @@
         { id: 'b7', name: 'Choice', type: 'choice_2', needChoice: true }, 
         ];
 
-        const INITIAL_PLAYER_DECK = [
+        // [Renamed] AI Deck (was Player)
+        const INITIAL_AI_DECK = [
         { id: 'p1', name: 'Move U/D', type: 'move_ud' },
         { id: 'p2', name: 'Move U/D', type: 'move_ud' },
         { id: 'p3', name: 'Move L/R', type: 'move_lr' },
@@ -173,7 +172,7 @@
 
         const getPlayerIcon = (id) => {
         switch(id) {
-            case 'boss': return '🟣';
+            case 'user': return '🟣'; // [Renamed]
             case 'red': return '🔴';
             case 'yellow': return '🟡';
             case 'green': return '🟢';
@@ -190,35 +189,25 @@
         };
 
         const AI_BRAIN = {
-        getThreatScore: (aiPos, bossPos, hasShield, isEclipse) => {
-            const dist = Math.abs(aiPos[0] - bossPos[0]) + Math.abs(aiPos[1] - bossPos[1]);
-            const isBossCorner = (bossPos[0]===0||bossPos[0]===2) && (bossPos[1]===0||bossPos[1]===2);
+        getThreatScore: (aiPos, userPos, hasShield, isEclipse) => {
+            const dist = Math.abs(aiPos[0] - userPos[0]) + Math.abs(aiPos[1] - userPos[1]);
+            const isUserCorner = (userPos[0]===0||userPos[0]===2) && (userPos[1]===0||userPos[1]===2);
             let score = 0;
-            if (dist === 0) {
-            score = -1900; 
-            }
-            else if (dist === 1) {
-            score = -500; 
-            }
+            if (dist === 0) score = -1900; 
+            else if (dist === 1) score = -500; 
             else if (dist === 2) {
-            const risk = isBossCorner ? -10 : -30;
-            score = risk;
+                const risk = isUserCorner ? -10 : -30;
+                score = risk;
             }
-            else {
-            score = 20; 
-            }
+            else score = 20; 
             return score;
         },
 
         getHandPermutations: (hand) => {
             const results = [];
             if (hand.length < 3) return [hand]; 
-
             const permute = (arr, m = []) => {
-            if (m.length === 3) {
-                results.push(m);
-                return;
-            }
+            if (m.length === 3) { results.push(m); return; }
             for (let i = 0; i < arr.length; i++) {
                 const curr = arr.slice();
                 const next = curr.splice(i, 1);
@@ -229,7 +218,7 @@
             return results;
         },
 
-        getBestMoveTarget: (currentPos, cardType, board, bossPos, allyPositions) => {
+        getBestMoveTarget: (currentPos, cardType, board, userPos, allyPositions) => {
             const [r, c] = currentPos;
             const candidates = [];
             
@@ -256,10 +245,10 @@
             const [tr, tc] = pos;
             let score = 0;
 
-            const distToBoss = Math.abs(tr - bossPos[0]) + Math.abs(tc - bossPos[1]);
-            if (distToBoss === 0) score -= 1000;
-            else if (distToBoss === 1) score -= 200;
-            else if (distToBoss === 2) score -= 20;
+            const distToUser = Math.abs(tr - userPos[0]) + Math.abs(tc - userPos[1]);
+            if (distToUser === 0) score -= 1000;
+            else if (distToUser === 1) score -= 200;
+            else if (distToUser === 2) score -= 20;
             else score += 50;
 
             let crowdPenalty = 0;
@@ -285,15 +274,16 @@
             return bestTarget;
         },
 
-        simulateSequence: (player, sequence, board, players, bossPos, wardPos, unlockedCount, currentTurn) => {
-            let pState = { ...player, pos: [...player.pos] };
+        simulateSequence: (aiEntity, sequence, board, allEntities, userPos, wardPos, unlockedCount, currentTurn) => {
+            let pState = { ...aiEntity, pos: [...aiEntity.pos] };
             let score = 0;
             let simUnlocked = unlockedCount; 
             let simLockHealth = {}; 
             let lastRealType = 'void'; 
             let events = []; 
             
-            let simBossPos = [...bossPos];
+            // [Renamed] simUserPos
+            let simUserPos = [...userPos];
 
             for (let i = 0; i < sequence.length; i++) {
             const card = sequence[i];
@@ -331,15 +321,15 @@
                 else type = 'void'; 
             } else if (type === 'unlock_move_ud') {
                 if (isLock) {
-                    const distToBoss = Math.abs(r - simBossPos[0]) + Math.abs(c - simBossPos[1]);
+                    const distToUser = Math.abs(r - simUserPos[0]) + Math.abs(c - simUserPos[1]);
                     let canFlee = false;
                     
-                    if (distToBoss <= 1) {
+                    if (distToUser <= 1) {
                          const candidates = [];
                          if (r > 0) candidates.push([r - 1, c]);
                          if (r < 2) candidates.push([r + 1, c]);
                          
-                         if (candidates.some(([cr, cc]) => cr !== simBossPos[0] || cc !== simBossPos[1])) {
+                         if (candidates.some(([cr, cc]) => cr !== simUserPos[0] || cc !== simUserPos[1])) {
                              canFlee = true;
                          }
                     }
@@ -351,22 +341,22 @@
                     if (r > 0) candidates.push([r - 1, c]);
                     if (r < 2) candidates.push([r + 1, c]);
                     
-                    const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === simBossPos[0] && cc === simBossPos[1]);
+                    const onlyPathIsUser = candidates.length > 0 && candidates.every(([cr, cc]) => cr === simUserPos[0] && cc === simUserPos[1]);
                     
-                    if (onlyPathIsBoss) type = 'unlock'; 
+                    if (onlyPathIsUser) type = 'unlock'; 
                     else type = 'move_ud';
                 }
             } else if (type === 'unlock_move_lr') {
                 if (isLock) {
-                    const distToBoss = Math.abs(r - simBossPos[0]) + Math.abs(c - simBossPos[1]);
+                    const distToUser = Math.abs(r - simUserPos[0]) + Math.abs(c - simUserPos[1]);
                     let canFlee = false;
                     
-                    if (distToBoss <= 1) {
+                    if (distToUser <= 1) {
                          const candidates = [];
                          if (c > 0) candidates.push([r, c - 1]);
                          if (c < 2) candidates.push([r, c + 1]);
                          
-                         if (candidates.some(([cr, cc]) => cr !== simBossPos[0] || cc !== simBossPos[1])) canFlee = true;
+                         if (candidates.some(([cr, cc]) => cr !== simUserPos[0] || cc !== simUserPos[1])) canFlee = true;
                     }
 
                     if (canFlee && !isDesperate) type = 'move_lr';
@@ -376,9 +366,9 @@
                     if (c > 0) candidates.push([r, c - 1]);
                     if (c < 2) candidates.push([r, c + 1]);
                     
-                    const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === simBossPos[0] && cc === simBossPos[1]);
+                    const onlyPathIsUser = candidates.length > 0 && candidates.every(([cr, cc]) => cr === simUserPos[0] && cc === simUserPos[1]);
                     
-                    if (onlyPathIsBoss) type = 'unlock'; 
+                    if (onlyPathIsUser) type = 'unlock'; 
                     else type = 'move_lr';
                 }
             }
@@ -422,13 +412,13 @@
                 score -= 50;
                 } else {
                 pState.isShielded = true;
-                const dist = Math.abs(pState.pos[0] - simBossPos[0]) + Math.abs(pState.pos[1] - simBossPos[1]);
+                const dist = Math.abs(pState.pos[0] - simUserPos[0]) + Math.abs(pState.pos[1] - simUserPos[1]);
                 if (dist === 0) score += 100; 
                 else score += 1; 
                 }
             } else if (type.includes('move')) {
-                const allies = Object.values(players).filter(pl => pl.id !== 'boss' && pl.id !== player.id).map(pl => pl.pos);
-                const newPos = AI_BRAIN.getBestMoveTarget(pState.pos, type, board, simBossPos, allies); 
+                const allies = Object.values(allEntities).filter(pl => pl.id !== 'user' && pl.id !== aiEntity.id).map(pl => pl.pos);
+                const newPos = AI_BRAIN.getBestMoveTarget(pState.pos, type, board, simUserPos, allies); 
                 
                 if (newPos[0] === pState.pos[0] && newPos[1] === pState.pos[1]) {
                 score -= 20; 
@@ -438,13 +428,13 @@
                 }
             }
 
-            const threat = AI_BRAIN.getThreatScore(pState.pos, bossPos, pState.isShielded, isEclipse);
+            const threat = AI_BRAIN.getThreatScore(pState.pos, userPos, pState.isShielded, isEclipse);
             score += threat;
             
             const endCell = board[pState.pos[0]][pState.pos[1]];
             if (endCell.type === FIELD_TYPES.LOCK && endCell.dice > 0) {
                 score += 40;
-                const dist = Math.abs(pState.pos[0] - bossPos[0]) + Math.abs(pState.pos[1] - bossPos[1]);
+                const dist = Math.abs(pState.pos[0] - userPos[0]) + Math.abs(pState.pos[1] - userPos[1]);
                 if (dist >= 3) score += 100; 
             }
 
@@ -510,20 +500,20 @@
         return <div className="flex items-center gap-1 justify-center">{icons}</div>;
         };
 
-        const TokenLayer = ({ players }) => {
+        const TokenLayer = ({ entities }) => {
         return (
             <div className="absolute inset-0 pointer-events-none z-40 overflow-visible">
-            {Object.values(players).map(p => {
+            {Object.values(entities).map(p => {
                 const [row, col] = p.pos;
                 if (row < 0 || col < 0 || p.isDead || p.isRecovering) return null;
                 
-                const samePosPlayers = Object.values(players).filter(other => 
+                const samePosEntities = Object.values(entities).filter(other => 
                 other.pos[0] === row && other.pos[1] === col && !other.isDead && !other.isRecovering
                 );
-                const pIdx = samePosPlayers.findIndex(c => c.id === p.id);
+                const pIdx = samePosEntities.findIndex(c => c.id === p.id);
                 
                 let offsetX = 0, offsetY = 0;
-                if (samePosPlayers.length > 1 && pIdx !== -1) {
+                if (samePosEntities.length > 1 && pIdx !== -1) {
                 offsetX = (pIdx % 2 === 0 ? -10 : 10);
                 offsetY = (pIdx < 2 ? -10 : 10);
                 }
@@ -541,7 +531,7 @@
                     className="absolute w-[33.33%] h-[33.33%] flex items-center justify-center transition-transform duration-1000 ease-in-out will-change-transform"
                     style={{
                     transform: `translate3d(${xPercent}%, ${yPercent}%, 0)`,
-                    zIndex: p.id === 'boss' ? 50 : 45
+                    zIndex: p.id === 'user' ? 50 : 45
                     }}
                 >
                     <div 
@@ -554,7 +544,7 @@
                     <div className="text-[#FFFFFF] drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] flex items-center justify-center w-full h-full">
                         {p.isShielded ? (
                             <Shield size={18} />
-                        ) : p.id === 'boss' ? (
+                        ) : p.id === 'user' ? (
                             <Eye size={18} />
                         ) : (
                             <User size={18} />
@@ -586,7 +576,7 @@
             style={{ borderColor: statusColor }}
             >
             <div className="flex flex-col gap-0.5 justify-center">
-                {player.id === 'boss' ? (
+                {player.id === 'user' ? (
                 <Eye size={10} style={{ color: THEME_COLORS.PURPLE }} />
                 ) : (
                 [...Array(2)].map((_, i) => (
@@ -640,8 +630,9 @@
 
         function App() {
         const [board, setBoard] = useState([]);
-        const [players, setPlayers] = useState({
-            boss: { id: 'boss', name: 'BOSS', pos: [1, 1], hp: 99, deck: [], hand: [], discard: [], color: 'purple', type: 'boss', isShielded: false, isDead: false, isRecovering: false },
+        // [Renamed] players -> entities (user, ai players)
+        const [entities, setEntities] = useState({
+            user: { id: 'user', name: 'USER', pos: [1, 1], hp: 99, deck: [], hand: [], discard: [], color: 'purple', type: 'user', isShielded: false, isDead: false, isRecovering: false },
             red: { id: 'red', name: 'RED', pos: [1, 1], hp: 2, deck: [], hand: [], discard: [], color: 'red', type: 'ai', isShielded: false, isDead: false, isRecovering: false },
             yellow: { id: 'yellow', name: 'YEL', pos: [1, 1], hp: 2, deck: [], hand: [], discard: [], color: 'yellow', type: 'ai', isShielded: false, isDead: false, isRecovering: false },
             green: { id: 'green', name: 'GRN', pos: [1, 1], hp: 2, deck: [], hand: [], discard: [], color: 'green', type: 'ai', isShielded: false, isDead: false, isRecovering: false },
@@ -649,7 +640,10 @@
         
         const [wardPos, setWardPos] = useState([0, 1]);
         const [unlockedCount, setUnlockedCount] = useState(0);
-        const [doomCounter, setDoomCounter] = useState(8); 
+        
+        // [Renamed] doomCounter -> remainingRounds
+        const [remainingRounds, setRemainingRounds] = useState(8); 
+        
         const [gameTurn, setGameTurn] = useState(1); 
         const [gamePhase, setGamePhase] = useState('setup'); 
         const [actionArray, setActionArray] = useState(Array(12).fill(null)); 
@@ -704,24 +698,26 @@
                 newBoard[hr][hc].hourglass = true;
             }
 
-            const nextPlayers = {
-                boss: { id: 'boss', name: 'BOSS', pos: [1, 1], hp: 99, deck: [], hand: [], discard: [], color: 'purple', type: 'boss', isShielded: false, isDead: false, isRecovering: false },
+            const nextEntities = {
+                user: { id: 'user', name: 'USER', pos: [1, 1], hp: 99, deck: [], hand: [], discard: [], color: 'purple', type: 'user', isShielded: false, isDead: false, isRecovering: false },
                 red: { id: 'red', name: 'RED', pos: [1, 1], hp: 2, deck: [], hand: [], discard: [], color: 'red', type: 'ai', isShielded: false, isDead: false, isRecovering: false },
                 yellow: { id: 'yellow', name: 'YEL', pos: [1, 1], hp: 2, deck: [], hand: [], discard: [], color: 'yellow', type: 'ai', isShielded: false, isDead: false, isRecovering: false },
                 green: { id: 'green', name: 'GRN', pos: [1, 1], hp: 2, deck: [], hand: [], discard: [], color: 'green', type: 'ai', isShielded: false, isDead: false, isRecovering: false },
             };
 
-            ['red', 'yellow', 'green', 'boss'].forEach(id => {
-                nextPlayers[id].deck = shuffle([...(id === 'boss' ? INITIAL_BOSS_DECK : INITIAL_PLAYER_DECK)]);
-                if (id !== 'boss') nextPlayers[id].pos = findBestSpawnPos(newBoard, nextPlayers, [0, 1], id, true);
-                else nextPlayers[id].pos = [1, 1];
+            ['red', 'yellow', 'green', 'user'].forEach(id => {
+                const deckSource = (id === 'user') ? INITIAL_USER_DECK : INITIAL_AI_DECK;
+                nextEntities[id].deck = shuffle([...deckSource]);
+                
+                if (id !== 'user') nextEntities[id].pos = findBestSpawnPos(newBoard, nextEntities, [0, 1], id, true);
+                else nextEntities[id].pos = [1, 1];
             });
 
             setBoard(newBoard);
-            setPlayers(nextPlayers);
+            setEntities(nextEntities);
             setWardPos([0, 1]);
             setUnlockedCount(0);
-            setDoomCounter(8);
+            setRemainingRounds(8);
             setGameTurn(1);
             setGamePhase('setup');
             setActionArray(Array(12).fill(null));
@@ -730,7 +726,7 @@
             setCheckpoint(null);
             setConfirmNewGame(false); 
 
-            startNewRound(nextPlayers, [0, 1], newBoard, 0, 1);
+            startNewRound(nextEntities, [0, 1], newBoard, 0, 1);
         };
 
         useEffect(() => {
@@ -742,10 +738,10 @@
                     if (state.gamePhase === 'resolving' && state.checkpoint) {
                         const cp = state.checkpoint;
                         setBoard(cp.board);
-                        setPlayers(cp.players);
+                        setEntities(cp.entities);
                         setWardPos(cp.wardPos);
                         setUnlockedCount(cp.unlockedCount);
-                        setDoomCounter(cp.doomCounter);
+                        setRemainingRounds(cp.remainingRounds);
                         setGameTurn(cp.gameTurn);
                         setGamePhase('resolving');
                         setActionArray(cp.actionArray);
@@ -755,10 +751,10 @@
                         setResumeTrigger(true);
                     } else {
                         setBoard(state.board);
-                        setPlayers(state.players);
+                        setEntities(state.entities);
                         setWardPos(state.wardPos);
                         setUnlockedCount(state.unlockedCount);
-                        setDoomCounter(state.doomCounter);
+                        setRemainingRounds(state.remainingRounds);
                         setGameTurn(state.gameTurn);
                         setGamePhase(state.gamePhase);
                         setActionArray(state.actionArray);
@@ -778,15 +774,15 @@
         useEffect(() => {
             if (gamePhase === 'setup') return;
             const stateToSave = {
-                board, players, wardPos, unlockedCount, doomCounter, 
+                board, entities, wardPos, unlockedCount, remainingRounds, 
                 gameTurn, gamePhase, actionArray, logs, winner,
                 checkpoint
             };
             localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
-        }, [board, players, wardPos, unlockedCount, doomCounter, gameTurn, gamePhase, actionArray, logs, winner, checkpoint]);
+        }, [board, entities, wardPos, unlockedCount, remainingRounds, gameTurn, gamePhase, actionArray, logs, winner, checkpoint]);
 
         useEffect(() => {
-            if (resumeTrigger && players.boss.id === 'boss') {
+            if (resumeTrigger && entities.user.id === 'user') {
                 setResumeTrigger(false);
                 resolveActions(actionArray, 0);
             }
@@ -798,15 +794,15 @@
             startFreshGame();
         };
 
-        const findBestSpawnPos = (currentBoard, currentPlayers, currentWard, currentPlayerId, isGameStart = false) => {
+        const findBestSpawnPos = (currentBoard, currentEntities, currentWard, currentPlayerId, isGameStart = false) => {
             const candidates = [];
             currentBoard.forEach((row, r) => row.forEach((cell, c) => {
-            const isBossPos = r === currentPlayers.boss.pos[0] && c === currentPlayers.boss.pos[1];
+            const isUserPos = r === currentEntities.user.pos[0] && c === currentEntities.user.pos[1];
             const isWard = r === currentWard[0] && c === currentWard[1];
             const isEye = cell.type === FIELD_TYPES.EYE;
-            const occupied = Object.values(currentPlayers).some(p => p.pos[0] === r && p.pos[1] === c && !p.isDead && !p.isRecovering && p.id !== currentPlayerId);
+            const occupied = Object.values(currentEntities).some(p => p.pos[0] === r && p.pos[1] === c && !p.isDead && !p.isRecovering && p.id !== currentPlayerId);
             
-            if ((!cell.dice || cell.dice === 0) && !isBossPos && !occupied) {
+            if ((!cell.dice || cell.dice === 0) && !isUserPos && !occupied) {
                 let score = 0;
                 if (isWard) score -= 100;
                 
@@ -815,9 +811,9 @@
                     if (isEye) score -= 2000;
                 }
 
-                score += AI_BRAIN.getThreatScore([r,c], currentPlayers.boss.pos, false, false);
+                score += AI_BRAIN.getThreatScore([r,c], currentEntities.user.pos, false, false);
 
-                Object.values(currentPlayers).forEach(p => {
+                Object.values(currentEntities).forEach(p => {
                 if (p.type === 'ai' && !p.isDead && p.id !== currentPlayerId) {
                     const d = Math.abs(r-p.pos[0]) + Math.abs(c-p.pos[1]);
                     if (d < 2) score -= 50; 
@@ -831,8 +827,8 @@
             return candidates.length > 0 ? candidates[0].pos : [0,0];
         };
 
-        const planTeamStrategy = (currentPlayers, currentBoard, currentWard, currentUnlockedCount, currentTurn) => {
-            const bossPos = currentPlayers.boss.pos;
+        const planTeamStrategy = (currentEntities, currentBoard, currentWard, currentUnlockedCount, currentTurn) => {
+            const userPos = currentEntities.user.pos;
             const teamOrders = [
             ['red', 'yellow', 'green'], ['red', 'green', 'yellow'],
             ['yellow', 'red', 'green'], ['yellow', 'green', 'red'],
@@ -848,12 +844,12 @@
             let orderScore = 0;
             let orderPlan = {};
             
-            let simPlayers = JSON.parse(JSON.stringify(currentPlayers));
+            let simEntities = JSON.parse(JSON.stringify(currentEntities));
             let simBoard = JSON.parse(JSON.stringify(currentBoard)); 
             let simUnlocked = currentUnlockedCount;
 
             order.forEach(pid => {
-                const p = simPlayers[pid];
+                const p = simEntities[pid];
                 if (p.isDead || p.isRecovering) return; 
 
                 const handPerms = AI_BRAIN.getHandPermutations(p.hand);
@@ -862,7 +858,7 @@
                 let bestPermResult = null;
 
                 handPerms.forEach(seq => {
-                    const result = AI_BRAIN.simulateSequence(p, seq, simBoard, simPlayers, bossPos, currentWard, simUnlocked, currentTurn);
+                    const result = AI_BRAIN.simulateSequence(p, seq, simBoard, simEntities, userPos, currentWard, simUnlocked, currentTurn);
                     if (result.score > bestPermScore) {
                     bestPermScore = result.score;
                     bestPermResult = result;
@@ -899,16 +895,16 @@
             return bestPlan;
         };
 
-        const startNewRound = async (currentPlayers, currentWard, currentBoard, currentUnlocked, currentTurn) => {
+        const startNewRound = async (currentEntities, currentWard, currentBoard, currentUnlocked, currentTurn) => {
             setCheckpoint(null);
             
-            const p = JSON.parse(JSON.stringify(currentPlayers));
+            const p = JSON.parse(JSON.stringify(currentEntities));
             
             Object.values(p).forEach(player => {
             if (player.isRecovering) {
                 player.isRecovering = false;
                 player.isDead = false; 
-                player.hp = player.type === 'boss' ? 99 : 1;
+                player.hp = player.type === 'user' ? 99 : 1;
                 player.pos = findBestSpawnPos(currentBoard, p, currentWard, player.id);
                 addLog(`✨ ${getPlayerIcon(player.id)} Respawned`);
             } else if (player.isDead) {
@@ -920,10 +916,10 @@
             player.isShielded = false;
             });
 
-            const bossPool = shuffle([...p.boss.deck, ...p.boss.discard]);
-            p.boss.discard = bossPool.slice(0, 2); 
-            p.boss.hand = p.boss.isRecovering ? [] : bossPool.slice(2, 7); 
-            p.boss.deck = bossPool.slice(7); 
+            const userPool = shuffle([...p.user.deck, ...p.user.discard]);
+            p.user.discard = userPool.slice(0, 2); 
+            p.user.hand = p.user.isRecovering ? [] : userPool.slice(2, 7); 
+            p.user.deck = userPool.slice(7); 
             
             ['red', 'yellow', 'green'].forEach(id => {
             if (!p[id].isRecovering) {
@@ -959,7 +955,7 @@
             });
             }
 
-            setPlayers(p); setGamePhase('planning'); setActionArray(newArray); setResolvingIndex(-1);
+            setEntities(p); setGamePhase('planning'); setActionArray(newArray); setResolvingIndex(-1);
             addLog(`>>> Planning Phase`);
         };
 
@@ -990,7 +986,7 @@
                 endPos = { x: tr.left + tr.width/2, y: tr.top + tr.height/2 };
             }
 
-            setCinematicEffect({ iconType, color: players[playerId].color, start: startPos, center: centerPos, end: endPos });
+            setCinematicEffect({ iconType, color: entities[playerId].color, start: startPos, center: centerPos, end: endPos });
             setTimeout(() => { setCinematicEffect(null); resolve(); }, 2000);
             });
         };
@@ -998,14 +994,14 @@
         const resolveActions = async (finalArray, startIndex = 0) => {
             const currentRunVersion = gameVersionRef.current;
 
-            let curPlayers = JSON.parse(JSON.stringify(players));
+            let curEntities = JSON.parse(JSON.stringify(entities));
             let curBoard = JSON.parse(JSON.stringify(board));
             let curUnlocked = unlockedCount;
             let curWard = [...wardPos];
-            let lastCardType = { boss: null, red: null, yellow: null, green: null }; 
+            let lastCardType = { user: null, red: null, yellow: null, green: null }; 
             let queue = [...finalArray];
             
-            let currentDoomCount = doomCounter;
+            let curRounds = remainingRounds;
 
             const isDesperate = gameTurn >= 4 || curUnlocked >= 2;
 
@@ -1023,7 +1019,7 @@
             const logPrefix = `R${gameTurn}M${moveNum}${numberEmoji}`;
 
             if (!action) { await new Promise(r => setTimeout(r, 200)); continue; }
-            const p = curPlayers[action.playerId];
+            const p = curEntities[action.playerId];
             if (p.isDead || p.hp <= 0) { await new Promise(r => setTimeout(r, 200)); continue; }
 
             let effectiveType = action.card.type;
@@ -1042,18 +1038,18 @@
                 else effectiveType = 'void';
             } else if (effectiveType === 'unlock_move_ud') {
                 if (isLocked) {
-                    const dist = Math.abs(p.pos[0] - curPlayers.boss.pos[0]) + Math.abs(p.pos[1] - curPlayers.boss.pos[1]);
+                    const dist = Math.abs(p.pos[0] - curEntities.user.pos[0]) + Math.abs(p.pos[1] - curEntities.user.pos[1]);
                     let canFlee = false;
                     
                     if (dist <= 1) {
                          const [r, c] = p.pos;
-                         const [br, bc] = curPlayers.boss.pos;
+                         const [ur, uc] = curEntities.user.pos;
                          
                          const candidates = [];
                          if (r > 0) candidates.push([r - 1, c]);
                          if (r < 2) candidates.push([r + 1, c]);
                          
-                         if (candidates.some(([cr, cc]) => cr !== br || cc !== bc)) {
+                         if (candidates.some(([cr, cc]) => cr !== ur || cc !== uc)) {
                              canFlee = true;
                          }
                     }
@@ -1065,25 +1061,25 @@
                     if (r > 0) candidates.push([r - 1, c]);
                     if (r < 2) candidates.push([r + 1, c]);
                     
-                    const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === br && cc === bc);
+                    const onlyPathIsUser = candidates.length > 0 && candidates.every(([cr, cc]) => cr === curEntities.user.pos[0] && cc === curEntities.user.pos[1]);
                     
-                    if (onlyPathIsBoss) effectiveType = 'unlock';
+                    if (onlyPathIsUser) effectiveType = 'unlock';
                     else effectiveType = 'move_ud';
                 }
             } else if (effectiveType === 'unlock_move_lr') {
                 if (isLocked) {
-                    const dist = Math.abs(p.pos[0] - curPlayers.boss.pos[0]) + Math.abs(p.pos[1] - curPlayers.boss.pos[1]);
+                    const dist = Math.abs(p.pos[0] - curEntities.user.pos[0]) + Math.abs(p.pos[1] - curEntities.user.pos[1]);
                     let canFlee = false;
                     
                     if (dist <= 1) {
                          const [r, c] = p.pos;
-                         const [br, bc] = curPlayers.boss.pos;
+                         const [ur, uc] = curEntities.user.pos;
                          
                          const candidates = [];
                          if (c > 0) candidates.push([r, c - 1]);
                          if (c < 2) candidates.push([r, c + 1]);
                          
-                         if (candidates.some(([cr, cc]) => cr !== br || cc !== bc)) {
+                         if (candidates.some(([cr, cc]) => cr !== ur || cc !== uc)) {
                              canFlee = true;
                          }
                     }
@@ -1095,20 +1091,20 @@
                     if (c > 0) candidates.push([r, c - 1]);
                     if (c < 2) candidates.push([r, c + 1]);
                     
-                    const onlyPathIsBoss = candidates.length > 0 && candidates.every(([cr, cc]) => cr === br && cc === bc);
+                    const onlyPathIsUser = candidates.length > 0 && candidates.every(([cr, cc]) => cr === curEntities.user.pos[0] && cc === curEntities.user.pos[1]);
                     
-                    if (onlyPathIsBoss) effectiveType = 'unlock';
+                    if (onlyPathIsUser) effectiveType = 'unlock';
                     else effectiveType = 'move_lr';
                 }
             }
 
             let targetPos = [...p.pos];
             
-            if (action.playerId === 'boss' && effectiveType !== 'void') {
+            if (action.playerId === 'user' && effectiveType !== 'void') {
                 if (effectiveType.includes('move')) {
-                    const valid = []; const [br, bc] = p.pos;
-                    if (effectiveType === 'move_ud') { if (br > 0) valid.push([br-1, bc]); if (br < 2) valid.push([br+1, bc]); }
-                    else { if (bc > 0) valid.push([br, bc-1]); if (bc < 2) valid.push([br, bc+1]); }
+                    const valid = []; const [ur, uc] = p.pos;
+                    if (effectiveType === 'move_ud') { if (ur > 0) valid.push([ur-1, uc]); if (ur < 2) valid.push([ur+1, uc]); }
+                    else { if (uc > 0) valid.push([ur, uc-1]); if (uc < 2) valid.push([ur, uc+1]); }
                     
                     if (valid.length === 1) {
                         targetPos = valid[0];
@@ -1138,8 +1134,8 @@
                 }
             } 
             else if (effectiveType.includes('move')) {
-                const allies = Object.values(curPlayers).filter(pl => pl.id !== 'boss' && pl.id !== p.id && !pl.isDead).map(pl => pl.pos);
-                targetPos = AI_BRAIN.getBestMoveTarget(p.pos, effectiveType, curBoard, curPlayers.boss.pos, allies);
+                const allies = Object.values(curEntities).filter(pl => pl.id !== 'user' && pl.id !== p.id && !pl.isDead).map(pl => pl.pos);
+                targetPos = AI_BRAIN.getBestMoveTarget(p.pos, effectiveType, curBoard, curEntities.user.pos, allies);
             }
 
             let visualType = effectiveType;
@@ -1183,8 +1179,8 @@
                             const prevIdx = (currentWardIdx - 1 + WARD_PATH.length) % WARD_PATH.length;
                             curWard = WARD_PATH[prevIdx];
                             setWardPos(curWard);
-                            currentDoomCount++; 
-                            setDoomCounter(prev => prev + 1); 
+                            curRounds++; 
+                            setRemainingRounds(prev => prev + 1); 
                         } else {
                             curBoard[p.pos[0]][p.pos[1]].type = FIELD_TYPES.EYE;
                         }
@@ -1220,8 +1216,8 @@
                     let hits = 0;
                     let hitDetails = [];
                     
-                    Object.values(curPlayers).forEach(target => {
-                    if (target.id !== 'boss' && target.pos[0] === p.pos[0] && target.pos[1] === p.pos[1]) {
+                    Object.values(curEntities).forEach(target => {
+                    if (target.id !== 'user' && target.pos[0] === p.pos[0] && target.pos[1] === p.pos[1]) {
                         if (target.isShielded) { 
                             target.isShielded = false; 
                             hitDetails.push(`Blocked by ${getPlayerIcon(target.id)}`);
@@ -1231,7 +1227,7 @@
                         hitDetails.push(`Hit ${getPlayerIcon(target.id)} (HP ${oldHp}->${target.hp})`);
                         if (target.hp <= 0) {
                             target.isDead = true; target.pos = [-1, -1]; 
-                            for (let k = i + 1; k < queue.length; k++) if (queue[k]?.playerId === target.id) { curPlayers[target.id].discard.push(queue[k].card); queue[k] = null; }
+                            for (let k = i + 1; k < queue.length; k++) if (queue[k]?.playerId === target.id) { curEntities[target.id].discard.push(queue[k].card); queue[k] = null; }
                             setActionArray([...queue]);
                         }
                         }
@@ -1245,7 +1241,7 @@
                 } else if (effectiveType === 'assault') {
                     let hits = 0;
                     let assaultDetails = [];
-                    const targets = Object.values(curPlayers).filter(t => t.id !== 'boss' && t.pos[0] === p.pos[0] && t.pos[1] === p.pos[1]);
+                    const targets = Object.values(curEntities).filter(t => t.id !== 'user' && t.pos[0] === p.pos[0] && t.pos[1] === p.pos[1]);
                     
                     if (targets.length === 0) {
                         logDetail = "Attack Missed";
@@ -1273,7 +1269,7 @@
 
                         if (t.hp <= 0) {
                             t.isDead = true; t.pos = [-1, -1];
-                            for (let k = i + 1; k < queue.length; k++) if (queue[k]?.playerId === t.id) { curPlayers[t.id].discard.push(queue[k].card); queue[k] = null; }
+                            for (let k = i + 1; k < queue.length; k++) if (queue[k]?.playerId === t.id) { curEntities[t.id].discard.push(queue[k].card); queue[k] = null; }
                             setActionArray([...queue]);
                         }
                         
@@ -1290,7 +1286,7 @@
                                 assaultDetails.push(`Hit ${getPlayerIcon(target.id)} (HP ${oldHp}->${target.hp})`);
                                 if (target.hp <= 0) {
                                     target.isDead = true; target.pos = [-1, -1]; 
-                                    for (let k = i + 1; k < queue.length; k++) if (queue[k]?.playerId === target.id) { curPlayers[target.id].discard.push(queue[k].card); queue[k] = null; }
+                                    for (let k = i + 1; k < queue.length; k++) if (queue[k]?.playerId === target.id) { curEntities[target.id].discard.push(queue[k].card); queue[k] = null; }
                                     setActionArray([...queue]);
                                 }
                             }
@@ -1312,13 +1308,12 @@
             p.discard.push(action.card);
             
             if ((i + 1) % 4 === 0) {
-                Object.values(curPlayers).forEach(pl => pl.isShielded = false);
+                Object.values(curEntities).forEach(pl => pl.isShielded = false);
             }
 
-            // [Fix] 6. 更新前再檢查一次
             if (gameVersionRef.current !== currentRunVersion) return;
 
-            setPlayers({ ...curPlayers }); setBoard([...curBoard]); setUnlockedCount(curUnlocked);
+            setEntities({ ...curEntities }); setBoard([...curBoard]); setUnlockedCount(curUnlocked);
             
             await new Promise(r => setTimeout(r, FLASH_DURATION)); 
             
@@ -1328,7 +1323,7 @@
             await new Promise(r => setTimeout(r, 500));
             }
 
-            Object.values(curPlayers).forEach(p => {
+            Object.values(curEntities).forEach(p => {
             if (p.hand.length > 0) {
                 p.discard.push(...p.hand);
                 p.hand = [];
@@ -1336,40 +1331,39 @@
             });
             
             if (gameVersionRef.current !== currentRunVersion) return; // 結算前檢查
-            setPlayers({ ...curPlayers });
+            setEntities({ ...curEntities });
 
             const wardIdx = WARD_PATH.findIndex(([pr, pc]) => pr === curWard[0] && pc === curWard[1]);
             const nextIdx = (wardIdx + 1) % WARD_PATH.length;
             setWardPos(WARD_PATH[nextIdx]);
             
             if (curUnlocked >= 3) {
-                setWinner('Survivors');
+                setWinner('AI Players'); // [Renamed]
             } 
-            else if (currentDoomCount - 1 <= 0) { 
-                setWinner('Boss');
-                setDoomCounter(0); 
+            else if (curRounds - 1 <= 0) { 
+                setWinner('User'); // [Renamed]
+                setRemainingRounds(0); 
             } else { 
-                setDoomCounter(r => r - 1); 
+                setRemainingRounds(r => r - 1); 
                 setGameTurn(t => t + 1); 
-                startNewRound(curPlayers, WARD_PATH[nextIdx], curBoard, curUnlocked, gameTurn + 1); // Pass nextTurn correctly
+                startNewRound(curEntities, WARD_PATH[nextIdx], curBoard, curUnlocked, gameTurn + 1); 
             }
         };
 
         const finalizePlanning = () => { 
-            // [Fix] 防止連點
             if (gamePhase !== 'planning') return;
 
-            const bossRequired = players.boss.isRecovering ? 0 : 3; 
-            const bossInArray = actionArray.filter(a => a?.playerId === 'boss' && a?.card).length; 
-            if (bossInArray < bossRequired) return; 
+            const userRequired = entities.user.isRecovering ? 0 : 3; 
+            const userInArray = actionArray.filter(a => a?.playerId === 'user' && a?.card).length; 
+            if (userInArray < userRequired) return; 
             setActiveSelection(null); 
             
             const snapshot = {
                 board: JSON.parse(JSON.stringify(board)),
-                players: JSON.parse(JSON.stringify(players)),
+                entities: JSON.parse(JSON.stringify(entities)), // [Renamed]
                 wardPos: [...wardPos],
                 unlockedCount,
-                doomCounter,
+                remainingRounds,
                 gameTurn,
                 actionArray: JSON.parse(JSON.stringify(actionArray)),
                 logs: [...logs]
@@ -1380,7 +1374,7 @@
             resolveActions(actionArray); 
         };
         
-        const handleReturnToHand = () => { if (activeSelection?.type === 'array') { const newArray = [...actionArray]; const p = JSON.parse(JSON.stringify(players)); p.boss.hand.push(newArray[activeSelection.index].card); newArray[activeSelection.index] = null; setActionArray(newArray); setPlayers(p); setActiveSelection(null); } };
+        const handleReturnToHand = () => { if (activeSelection?.type === 'array') { const newArray = [...actionArray]; const p = JSON.parse(JSON.stringify(entities)); p.user.hand.push(newArray[activeSelection.index].card); newArray[activeSelection.index] = null; setActionArray(newArray); setEntities(p); setActiveSelection(null); } };
         
         const handleItemClick = (type, index) => { 
             if (gamePhase !== 'planning') return; 
@@ -1390,14 +1384,14 @@
             } else if (type === 'array' && index % 4 === 3) { 
             if (activeSelection) { 
                 const newArray = [...actionArray]; 
-                const p = JSON.parse(JSON.stringify(players)); 
+                const p = JSON.parse(JSON.stringify(entities)); 
                 if (activeSelection.type === 'hand') { 
-                const card = p.boss.hand[activeSelection.index]; 
-                if (newArray[index]) p.boss.hand.push(newArray[index].card); 
-                newArray[index] = { playerId: 'boss', card, visible: true }; 
-                p.boss.hand.splice(activeSelection.index, 1); 
+                const card = p.user.hand[activeSelection.index]; 
+                if (newArray[index]) p.user.hand.push(newArray[index].card); 
+                newArray[index] = { playerId: 'user', card, visible: true }; 
+                p.user.hand.splice(activeSelection.index, 1); 
                 } 
-                setActionArray(newArray); setPlayers(p); setActiveSelection(null); 
+                setActionArray(newArray); setEntities(p); setActiveSelection(null); 
             } else if (actionArray[index]) {
                 setActiveSelection({ type: 'array', index }); 
             }
@@ -1521,14 +1515,14 @@
 
                             </div>
                         )))}
-                        <TokenLayer players={players} />
+                        <TokenLayer entities={entities} />
                     </div>
                 </div>
 
                 <div className="px-3 py-1 bg-[#000000] border-b-2 border-[#3e2723] flex justify-between items-center shadow-lg relative z-10">
                     <div className="flex items-center gap-4">
                         <div className="flex gap-0.5">
-                        {[...Array(Math.max(0, doomCounter))].map((_, i) => (
+                        {[...Array(Math.max(0, remainingRounds))].map((_, i) => (
                             <Moon key={i} size={12} className="text-[#FFFFFF] fill-[#FFFFFF]" />
                         ))}
                         </div>
@@ -1536,13 +1530,13 @@
                     </div>
                     <button onClick={() => setIsLogExpanded(!isLogExpanded)} className="p-1 bg-[#1a120b] border border-[#5d4037] rounded transition-colors hover:border-[#ffa000]"><List size={12}/></button>
                 </div>
-                <div className="px-2 py-2 flex gap-1 bg-[#000000] border-b-2 border-[#3e2723]">{Object.values(players).map(p => <MiniStatus key={p.id} player={p} onClick={setViewingDiscard} />)}</div>
+                <div className="px-2 py-2 flex gap-1 bg-[#000000] border-b-2 border-[#3e2723]">{Object.values(entities).map(p => <MiniStatus key={p.id} player={p} onClick={setViewingDiscard} />)}</div>
                 
                 <div className="h-[140px] p-2 bg-[#000000] relative shadow-inner">
                     {winner ? (
                         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#f5f5dc] animate-in zoom-in duration-500" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/lined-paper-2.png')" }}>
-                        <h2 className={`text-3xl font-black italic tracking-tighter uppercase font-serif drop-shadow-md ${winner === 'Boss' ? 'text-[#ffb300]' : 'text-[#e53935]'}`}>
-                            {winner === 'Boss' ? 'VICTORY' : 'DEFEAT'}
+                        <h2 className={`text-3xl font-black italic tracking-tighter uppercase font-serif drop-shadow-md ${winner === 'User' ? 'text-[#6a0dad]' : 'text-[#e53935]'}`}>
+                            {winner === 'User' ? 'VICTORY' : 'DEFEAT'}
                         </h2>
                         <button onClick={handleSoftReset} className="mt-2 px-4 py-1 bg-[#3e2723] text-[#d7ccc8] rounded border border-[#8d6e63] text-[10px] font-bold uppercase hover:bg-[#5d4037] transition-colors">
                             New Game
@@ -1550,7 +1544,7 @@
                         </div>
                     ) : (
                         <div className={`grid grid-cols-5 gap-1.5 h-full mt-1 transition-all duration-500 ${gamePhase === 'resolving' ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
-                        {players.boss.hand.map((card, i) => (
+                        {entities.user.hand.map((card, i) => (
                             <div key={i} onClick={() => handleItemClick('hand', i)} 
                             className={`h-full rounded border bg-[#f5f5dc] border-[#a1887f] text-[#3e2723] flex flex-col items-center justify-between py-1.5 transition-all shadow-md cursor-pointer relative ${activeSelection?.type === 'hand' && activeSelection.index === i ? 'scale-105 z-10 animate-border-flash' : 'hover:-translate-y-0.5'}`}
                             style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')", boxShadow: 'inset 0 0 10px rgba(161, 136, 127, 0.2), 2px 2px 5px rgba(0,0,0,0.3)' }}
@@ -1561,7 +1555,7 @@
                         </div>
                     )}
                     
-                    {!winner && gamePhase === 'planning' && actionArray.filter(a => a?.playerId === 'boss' && a?.card).length === 3 && <button onClick={finalizePlanning} className={`absolute top-1 right-2 w-8 h-8 bg-[${THEME_COLORS.GREEN}] text-white rounded-full shadow-lg flex items-center justify-center animate-bounce border-2 border-white z-20 transition-all hover:brightness-110`}><Check size={16} strokeWidth={4} /></button>}
+                    {!winner && gamePhase === 'planning' && actionArray.filter(a => a?.playerId === 'user' && a?.card).length === 3 && <button onClick={finalizePlanning} className={`absolute top-1 right-2 w-8 h-8 bg-[${THEME_COLORS.GREEN}] text-white rounded-full shadow-lg flex items-center justify-center animate-bounce border-2 border-white z-20 transition-all hover:brightness-110`}><Check size={16} strokeWidth={4} /></button>}
                     {!winner && activeSelection?.type === 'array' && <button onClick={handleReturnToHand} className="absolute top-1 left-2 w-8 h-8 bg-[#4e342e] text-[#d7ccc8] rounded-full flex items-center justify-center border-2 border-[#8d6e63] z-20 animate-pulse shadow-xl"><RotateCcw size={14}/></button>}
                     
                     {isLogExpanded && <div className="absolute inset-0 bg-[#f5f5dc] z-30 p-2 animate-in slide-in-from-bottom duration-300" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/lined-paper-2.png')" }}>
@@ -1588,25 +1582,25 @@
                 <div className="w-[85px] flex flex-col bg-[#000000] shadow-2xl relative border-l-2 border-[#3e2723]">
                 <div className="flex-grow flex flex-col p-1 gap-1 bg-[#000000] h-full overflow-hidden">
                     {actionArray.map((action, i) => {
-                        const isBossSlot = i % 4 === 3;
+                        const isUserSlot = i % 4 === 3;
                         const isActive = resolvingIndex === i;
-                        const isPlacementTarget = activeSelection?.type === 'hand' && isBossSlot && gamePhase === 'planning';
+                        const isPlacementTarget = activeSelection?.type === 'hand' && isUserSlot && gamePhase === 'planning';
                         const getHardCodedPlayerBorder = (color) => { if (color === 'red') return THEME_COLORS.RED; if (color === 'yellow') return THEME_COLORS.YELLOW; if (color === 'green') return THEME_COLORS.GREEN; if (color === 'purple') return THEME_COLORS.PURPLE; return '#3e2723'; };
                         const isRevealed = action && (action.visible || resolvingIndex >= i);
                         const isResolved = resolvingIndex > i;
 
                         return (
-                        <div key={i} id={`slot-${i}`} onClick={() => isBossSlot && handleItemClick('array', i)} 
+                        <div key={i} id={`slot-${i}`} onClick={() => isUserSlot && handleItemClick('array', i)} 
                             className={`flex-1 min-h-0 w-full rounded border-4 flex flex-col items-center justify-center relative transition-all 
-                            ${action ? 'bg-[#f5f5dc]' : (isBossSlot ? `border-dashed border-[${THEME_COLORS.PURPLE}4d]` : 'border-dashed border-[#3e2723]')} 
+                            ${action ? 'bg-[#f5f5dc]' : (isUserSlot ? `border-dashed border-[${THEME_COLORS.PURPLE}4d]` : 'border-dashed border-[#3e2723]')} 
                             ${isActive ? 'ring-4 ring-[#f59e0b] shadow-[0_0_20px_#f59e0b] brightness-110 z-20' : ''}
                             ${isResolved ? 'opacity-50 grayscale' : ''}
                             ${isPlacementTarget ? `animate-border-flash bg-[${THEME_COLORS.PURPLE}1a] cursor-pointer` : ''}
                             `}
-                            style={action ? { borderColor: getHardCodedPlayerBorder(players[action.playerId].color), backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')", boxShadow: 'inset 0 0 5px rgba(0,0,0,0.2)' } : {}}
+                            style={action ? { borderColor: getHardCodedPlayerBorder(entities[action.playerId].color), backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')", boxShadow: 'inset 0 0 5px rgba(0,0,0,0.2)' } : {}}
                         >
                             {action && isRevealed && <ActionIcons type={action.card.type} size={14} dark={true} />}
-                            {!action && <span className="text-[7px] opacity-10 uppercase tracking-tighter font-mono">{isBossSlot ? 'BOSS' : i+1}</span>}
+                            {!action && <span className="text-[7px] opacity-10 uppercase tracking-tighter font-mono">{isUserSlot ? 'USER' : i+1}</span>}
                             {isResolved && action && <div className="absolute inset-0 flex items-center justify-center bg-[#0000001a] rounded"><Check size={24} className={`text-[${THEME_COLORS.GREEN}] font-bold drop-shadow-md`} /></div>}
                             {i % 4 === 0 && <div className="absolute left-[-15px] top-1/2 -translate-y-1/2 text-[5px] text-[#8d6e63] font-bold transform -rotate-90">M{Math.floor(i/4)+1}</div>}
                         </div>
