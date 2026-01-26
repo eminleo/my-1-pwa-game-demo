@@ -38,7 +38,6 @@
 
         const SAVE_KEY = "tag_455667_chess_save_v2_renamed";
 
-        // --- 🎨 顏色代碼 (Theme Colors) ---
         const THEME_COLORS = {
             PURPLE: '#6a0dad',      // User, 魔眼, 結界
             RED: '#D72600',         // AI Red, 攻擊
@@ -55,7 +54,12 @@
             BROWN_LIGHT: '#8d6e63', // 線條
             PAPER_BEIGE: '#f5f5dc', // 紙張
             BLACK: '#000000',       // 背景
-            GOLD: '#FFD700'         // 勝利
+            GOLD: '#FFD700',        // 勝利
+            STONE_300: '#d6d3d1',
+            SLATE_400: '#94a3b8',
+            BG_DARK: '#0c0a09',
+            BG_PANEL: '#1c1917',
+            BROWN_MID: '#8d6e63'
         };
 
         const COLORS = {
@@ -131,7 +135,6 @@
         const FIELD_TYPES = { BLANK: 'blank', EYE: 'eye', LOCK: 'lock' };
         const FLASH_DURATION = 500; 
 
-        // [Renamed] User Deck (was Boss)
         const INITIAL_USER_DECK = [
         { id: 'b1', name: 'Move U/D', type: 'move_ud', needChoice: true },
         { id: 'b2', name: 'Move U/D', type: 'move_ud', needChoice: true },
@@ -142,7 +145,6 @@
         { id: 'b7', name: 'Choice', type: 'choice_2', needChoice: true }, 
         ];
 
-        // [Renamed] AI Deck (was Player)
         const INITIAL_AI_DECK = [
         { id: 'p1', name: 'Move U/D', type: 'move_ud' },
         { id: 'p2', name: 'Move U/D', type: 'move_ud' },
@@ -172,7 +174,7 @@
 
         const getPlayerIcon = (id) => {
         switch(id) {
-            case 'user': return '🟣'; // [Renamed]
+            case 'user': return '🟣'; 
             case 'red': return '🔴';
             case 'yellow': return '🟡';
             case 'green': return '🟢';
@@ -193,21 +195,31 @@
             const dist = Math.abs(aiPos[0] - userPos[0]) + Math.abs(aiPos[1] - userPos[1]);
             const isUserCorner = (userPos[0]===0||userPos[0]===2) && (userPos[1]===0||userPos[1]===2);
             let score = 0;
-            if (dist === 0) score = -1900; 
-            else if (dist === 1) score = -500; 
-            else if (dist === 2) {
-                const risk = isUserCorner ? -10 : -30;
-                score = risk;
+            if (dist === 0) {
+            score = -1900; 
             }
-            else score = 20; 
+            else if (dist === 1) {
+            score = -500; 
+            }
+            else if (dist === 2) {
+            const risk = isUserCorner ? -10 : -30;
+            score = risk;
+            }
+            else {
+            score = 20; 
+            }
             return score;
         },
 
         getHandPermutations: (hand) => {
             const results = [];
             if (hand.length < 3) return [hand]; 
+
             const permute = (arr, m = []) => {
-            if (m.length === 3) { results.push(m); return; }
+            if (m.length === 3) {
+                results.push(m);
+                return;
+            }
             for (let i = 0; i < arr.length; i++) {
                 const curr = arr.slice();
                 const next = curr.splice(i, 1);
@@ -282,7 +294,6 @@
             let lastRealType = 'void'; 
             let events = []; 
             
-            // [Renamed] simUserPos
             let simUserPos = [...userPos];
 
             for (let i = 0; i < sequence.length; i++) {
@@ -630,7 +641,6 @@
 
         function App() {
         const [board, setBoard] = useState([]);
-        // [Renamed] players -> entities (user, ai players)
         const [entities, setEntities] = useState({
             user: { id: 'user', name: 'USER', pos: [1, 1], hp: 99, deck: [], hand: [], discard: [], color: 'purple', type: 'user', isShielded: false, isDead: false, isRecovering: false },
             red: { id: 'red', name: 'RED', pos: [1, 1], hp: 2, deck: [], hand: [], discard: [], color: 'red', type: 'ai', isShielded: false, isDead: false, isRecovering: false },
@@ -640,10 +650,7 @@
         
         const [wardPos, setWardPos] = useState([0, 1]);
         const [unlockedCount, setUnlockedCount] = useState(0);
-        
-        // [Renamed] doomCounter -> remainingRounds
         const [remainingRounds, setRemainingRounds] = useState(8); 
-        
         const [gameTurn, setGameTurn] = useState(1); 
         const [gamePhase, setGamePhase] = useState('setup'); 
         const [actionArray, setActionArray] = useState(Array(12).fill(null)); 
@@ -664,13 +671,27 @@
         
         const interactionResolverRef = useRef(null);
         
+        // [New] Ref to hold the resolver for the pending promise
+        // This is key to fixing the dangling promise issue
+        const pendingPromiseResolverRef = useRef(null);
+        
         const addLog = (msg) => setLogs(prev => [String(msg), ...prev].slice(0, 50));
 
         const startFreshGame = () => {
             gameVersionRef.current += 1;
 
+            // [Fix] Force resolve any hanging promise with dummy data
+            if (pendingPromiseResolverRef.current) {
+                pendingPromiseResolverRef.current([-1, -1]); // Resolve with dummy
+                pendingPromiseResolverRef.current = null;
+            }
+
             setFlashCell(null);
             setSelectableCells([]);
+            setCinematicEffect(null);
+            setActiveSelection(null);
+            setViewingDiscard(null);
+            setResumeTrigger(false);
 
             const fields = shuffle([...Array(3).fill(FIELD_TYPES.BLANK), FIELD_TYPES.EYE, ...Array(5).fill(FIELD_TYPES.LOCK)]);
             const rawDicePool = [4, 5, 5, 6, 6, 7];
@@ -1001,6 +1022,7 @@
             let lastCardType = { user: null, red: null, yellow: null, green: null }; 
             let queue = [...finalArray];
             
+            // [Fix] Correct variable usage (remainingRounds instead of doomCounter)
             let curRounds = remainingRounds;
 
             const isDesperate = gameTurn >= 4 || curUnlocked >= 2;
@@ -1057,7 +1079,7 @@
                     if (canFlee && !isDesperate) effectiveType = 'move_ud';
                     else effectiveType = 'unlock';
                 } else {
-                    const [r, c] = p.pos; // [Fix] Added definition
+                    const [r, c] = p.pos; 
                     const candidates = [];
                     if (r > 0) candidates.push([r - 1, c]);
                     if (r < 2) candidates.push([r + 1, c]);
@@ -1088,7 +1110,7 @@
                     if (canFlee && !isDesperate) effectiveType = 'move_lr';
                     else effectiveType = 'unlock';
                 } else {
-                    const [r, c] = p.pos; // [Fix] Added definition
+                    const [r, c] = p.pos; 
                     const candidates = [];
                     if (c > 0) candidates.push([r, c - 1]);
                     if (c < 2) candidates.push([r, c + 1]);
@@ -1124,8 +1146,21 @@
                     });
                     
                     addLog(`${logPrefix} ${playerIcon} : Select Tile`);
-                    const selectedPos = await new Promise(r => { setSelectableCells(valid); interactionResolverRef.current = r; });
-                    setSelectableCells([]);
+                    
+                    // [Fix] Store the resolve function in TWO places:
+                    const selectedPos = await new Promise(r => {
+                        setSelectableCells(valid);
+                        interactionResolverRef.current = r;
+                        pendingPromiseResolverRef.current = r; // Store for force-quitting
+                    });
+                    
+                    // Clear the pending ref after resolution
+                    pendingPromiseResolverRef.current = null;
+                    setSelectableCells([]); // Clear UI immediately after resolution
+
+                    // [Fix] Immediately check version to prevent zombie logic usage
+                    // If reset happened during await, this will return and prevent crash
+                    if (gameVersionRef.current !== currentRunVersion) return;
                     
                     if (selectedPos[0] === r && selectedPos[1] === c) {
                         effectiveType = 'assault';
@@ -1313,7 +1348,6 @@
                 Object.values(curEntities).forEach(pl => pl.isShielded = false);
             }
 
-            // [Fix] 6. 更新前再檢查一次
             if (gameVersionRef.current !== currentRunVersion) return;
 
             setEntities({ ...curEntities }); setBoard([...curBoard]); setUnlockedCount(curUnlocked);
