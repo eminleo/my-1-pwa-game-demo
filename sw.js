@@ -1,53 +1,55 @@
-// [Final Version] Tag 455667 Chess - Service Worker
+// [Version Bump] 升級為 v5-final，強制更新所有客戶端的 index.html
 const CACHE_PREFIX = 'tag-455667-chess-';
-const CACHE_VERSION = 'v3-hotfix'; 
+const CACHE_VERSION = 'v5-final'; 
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
-// 核心資源：必須全部下載成功，App 才能安裝 (包含 index.html 和 JS 庫)
-const CORE_ASSETS = [
+// 1. 絕對核心：自家檔案 (必須成功，否則 App 根本開不起來)
+const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
-  // 外部工具庫 (React 18.2.0 & Tailwind)
+  './icon.png'
+];
+
+// 2. 外部資源：CDN (盡力下載，失敗也不要阻止安裝)
+const EXTERNAL_LIBS = [
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/react@18.2.0/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js',
-  'https://unpkg.com/@babel/standalone/babel.min.js'
-];
-
-// 選用資源：即使下載失敗，也不會阻止 App 安裝 (例如 Icon 和 背景圖)
-const OPTIONAL_ASSETS = [
-  './icon.png',
+  'https://unpkg.com/@babel/standalone/babel.min.js',
   'https://www.transparenttextures.com/patterns/cream-paper.png',
   'https://www.transparenttextures.com/patterns/lined-paper-2.png'
 ];
 
-// 1. 安裝事件 (Install)
 self.addEventListener('install', (event) => {
   console.log(`[Service Worker] 安裝中... ${CACHE_NAME}`);
   self.skipWaiting(); // 強制接管，讓更新立刻生效
 
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // 嘗試下載選用資源，如果失敗則忽略 (不會導致安裝失敗)
-      cache.addAll(OPTIONAL_ASSETS).catch(err => console.warn('選用資源下載略過 (非致命):', err));
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // 策略：分開處理
       
-      // 強制下載核心資源，任何一個失敗都會導致安裝中止
-      return cache.addAll(CORE_ASSETS);
+      // A. 外部資源：用 Promise.allSettled (允許失敗)
+      // 就算 unpkg 掛了，也不會讓整個 install 流程崩潰
+      const externalPromises = EXTERNAL_LIBS.map(url => 
+        cache.add(url).catch(err => console.warn(`[SW] 外部資源下載失敗 (非致命): ${url}`, err))
+      );
+      await Promise.allSettled(externalPromises);
+
+      // B. 核心資源：必須成功 (如果這裡失敗，那真的沒救了，讓它報錯)
+      return cache.addAll(APP_SHELL);
     })
   );
 });
 
-// 2. 啟用事件 (Activate)
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] 啟用中... 智能清理舊快取');
+  console.log('[Service Worker] 啟用中... 清理舊快取');
   event.waitUntil(
     Promise.all([
-      self.clients.claim(), // 立即控制所有頁面
+      self.clients.claim(),
       caches.keys().then((keys) => Promise.all(
         keys.map((key) => {
           // 只刪除 "屬於本 App" 且 "版本過舊" 的快取
-          // 這樣就不會誤刪同網域下其他 App 的快取了
           if (key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME) {
             console.log('[Service Worker] 刪除舊版快取:', key);
             return caches.delete(key);
@@ -58,13 +60,8 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 3. 攔截請求 (Fetch)
 self.addEventListener('fetch', (event) => {
-  // 只處理 GET 請求
-  if (event.request.method !== 'GET') return;
-
   const url = new URL(event.request.url);
-  // 判斷是否為 "網頁本體" (HTML)
   const isHTML = event.request.mode === 'navigate' || url.pathname.endsWith('index.html') || url.pathname.endsWith('/');
 
   if (isHTML) {
