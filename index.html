@@ -694,7 +694,7 @@
             setResumeTrigger(false);
 
             const fields = shuffle([...Array(3).fill(FIELD_TYPES.BLANK), FIELD_TYPES.EYE, ...Array(5).fill(FIELD_TYPES.LOCK)]);
-            const rawDicePool = [4, 5, 5, 6, 6, 7];
+            const rawDicePool = [4, 5, 6, 6, 6, 7, 7];
             const selectedDice = shuffle(rawDicePool).slice(0, 5);
             let diceIndex = 0;
 
@@ -1691,3 +1691,4 @@
     </script>
 </body>
 </html>
+
