@@ -1,6 +1,6 @@
 {
   "name": "Tag 455667 Chess",
-  "short_name": "Tag 455667",
+  "short_name": "455667",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
@@ -21,3 +21,4 @@
     }
   ]
 }
+
